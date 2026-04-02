@@ -1,6 +1,5 @@
 // app/(tabs)/home/index.js
 
-import React from "react";
 import { StyleSheet, Text, View, Pressable } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -42,10 +41,50 @@ export default function Home() {
       {/* MAIN CONTENT */}
       <View style={styles.content}>
         <Text style={styles.bigText}>Dashboard</Text>
+        <StatCard
+          title="Active Medication"
+          value="0%"
+          subtitle="today"
+          icon="calendar-outline"
+          color={{ bg: "#e0e7ff", icon: "#3b82f6" }}
+        />
+        <StatCard
+          title="Taken Today"
+          value="0%"
+          subtitle="today"
+          icon="calendar-outline"
+          color={{ bg: "#e0e7ff", icon: "#3b82f6" }}
+        />
+        <StatCard
+          title="Missed Today"
+          value="0"
+          subtitle="doses"
+          icon="warning-outline"
+          color={{ bg: "#fee2e2", icon: "#ef4444" }}
+        />
       </View>
+
     </SafeAreaView>
   );
 }
+
+const StatCard = ({ title, value, subtitle, icon, color }) => {
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.cardTitle}>{title}</Text>
+
+        <View style={[styles.iconWrapper, { backgroundColor: color.bg }]}>
+          <Ionicons name={icon} size={20} color={color.icon} />
+        </View>
+      </View>
+
+      <Text style={styles.value}>{value}</Text>
+      <Text style={styles.subtitle}>{subtitle}</Text>
+    </View>
+  );
+};
+
 
 const styles = StyleSheet.create({
   safe: {
@@ -74,6 +113,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 18,
+    gap: 10,
   },
 
   bigText: {
@@ -88,4 +128,59 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.textGray,
   },
+  container: {
+    flex: 1,
+    backgroundColor: "#f4f6f8",
+    padding: 16,
+  },
+
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+
+  card: {
+    flex: 1,
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 14,
+
+    // Shadow (iOS)
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+
+    // Shadow (Android)
+    elevation: 3,
+  },
+
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  cardTitle: {
+    fontSize: 14,
+    color: "#6b7280",
+  },
+
+  iconWrapper: {
+    padding: 8,
+    borderRadius: 10,
+  },
+
+  value: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginTop: 10,
+  },
+
+  subtitle: {
+    marginTop: 4,
+    color: "#6b7280",
+  },
+
 });

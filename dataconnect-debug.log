@@ -1,0 +1,31 @@
+I0408 13:50:25.515246   23855 load.go:31] Reloading schema and connectors...
+I0408 13:50:25.548502   23855 control.go:100] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service fb3d] UpdateResources(): done
+Main schema: sources: schema/schema.gql [668B] 
+Connector "example": sources: 
+E0408 13:50:25.565662   23855 load.go:95] Errors generating SDK: [connector "example"]: invalid Data Connect Connector no query found in connector
+I0408 13:50:25.566861   23855 collector.go:107] schema extensions wrote into "/Users/konnaa/VisualStudioProjects/ForgotMyMeds/dataconnect/.dataconnect/schema"
+Generated sources: prelude.gql [80888B] main/query.gql [5059B] main/mutation.gql [13808B] main/implicit.gql [1835B] main/input.gql [41198B] main/relation.gql [20686B] 
+I0408 13:50:25.567177   23855 load.go:109] Finished reloading
+I0408 13:50:25.576585   23855 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:9399
+I0408 13:50:25.578435   23855 dev.go:104] Listening on address (HTTP + gRPC): [::1]:9399
+I0408 13:50:30.723490   23855 migrate.go:24] Running migration SQL:
+Step 1: CREATE EXTENSION II0408 13:50:31.282733   23703 engine.go:209] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service 3f28] ExecuteGraphqlRead query IntrospectionQuery: succeeded. 
+ext NOT NULL, PRIMARY KEY ("id"))
+Step 3: CREATE UNIQUE INDEX "user_userId_uidx" ON "public"."user" ("user_id")
+Step 4: CREATE TABLE "public"."medication" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "user_id" uuid NOT NULL, "capsule_quantity" integer NOT NULL, "created_at" timestamptz NOT NULL, "dose" text NOT NULL, "name" text NOT NULL, "notes" text NULL, "takes_afternoon" boolean NOT NULL, "takes_evening" boolean NOT NULL, "takes_morning" boolean NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "medication_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."user" ("id") ON DELETE CASCADE)
+Step 5: CREATE INDEX "medication_userId_idx" ON "public"."medication" ("user_id")
+Step 6: CREATE TABLE "public"."adherence_record" ("user_id" uuid NOT NULL, "medication_id" uuid NOT NULL, "date" date NOT NULL, "time_slot" text NOT NULL, "created_at" timestamptz NOT NULL, "taken" boolean NOT NULL, "taken_at" timestamptz NULL, PRIMARY KEY ("user_id", "medication_id", "date", "time_slot"), CONSTRAINT "adherence_record_medication_id_fkey" FOREIGN KEY ("medication_id") REFERENCES "public"."medication" ("id") ON DELETE CASCADE, CONSTRAINT "adherence_record_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."user" ("id") ON DELETE CASCADE)
+Step 7: CREATE INDEX "adherence_record_medicationId_idx" ON "public"."adherence_record" ("medication_id")
+Step 8: CREATE INDEX "adherence_record_userId_idx" ON "public"."adherence_record" ("user_id")
+Step 9: CREATE TABLE "public"."friendship" ("requestor_id" uuid NOT NULL, "recipient_id" uuid NOT NULL, "created_at" timestamptz NOT NULL, "status" text NOT NULL, PRIMARY KEY ("requestor_id", "recipient_id"), CONSTRAINT "friendship_recipient_id_fkey" FOREIGN KEY ("recipient_id") REFERENCES "public"."user" ("id") ON DELETE CASCADE, CONSTRAINT "friendship_requestor_id_fkey" FOREIGN KEY ("requestor_id") REFERENCES "public"."user" ("id") ON DELETE CASCADE)
+Step 10: CREATE INDEX "friendship_recipientId_idx" ON "public"."friendship" ("recipient_id")
+Step 11: CREATE INDEX "friendship_requestorId_idx" ON "public"."friendship" ("requestor_id")
+I0408 13:50:30.992284   23855 control.go:100] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service 1a5a] UpdateResources(): done
+Main schema: sources: schema/schema.gql [668B] 
+Connector "example": sources: 
+I0408 13:50:31.000353   23855 configure_emulator.go:21] ConfigureEmulator successed
+Request: service_id:  "forgotmymeds-3693f-service"
+connection_string:  "postgres://127.0.0.1:5432/forgotmymeds-3693f-database?sslmode=disable"
+database:  "forgotmymeds-3693f-database"
+
+Response: 

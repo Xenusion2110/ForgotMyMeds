@@ -1,0 +1,1308 @@
+"""
+✨ `AdherenceRecord_KeyOutput` returns the primary key fields of table type `AdherenceRecord`.
+
+It has the same format as `AdherenceRecord_Key`, but is only used as mutation return value.
+"""
+scalar AdherenceRecord_KeyOutput
+"""
+✨ `Friendship_KeyOutput` returns the primary key fields of table type `Friendship`.
+
+It has the same format as `Friendship_Key`, but is only used as mutation return value.
+"""
+scalar Friendship_KeyOutput
+"""
+✨ `Medication_KeyOutput` returns the primary key fields of table type `Medication`.
+
+It has the same format as `Medication_Key`, but is only used as mutation return value.
+"""
+scalar Medication_KeyOutput
+"""
+✨ `User_KeyOutput` returns the primary key fields of table type `User`.
+
+It has the same format as `User_Key`, but is only used as mutation return value.
+"""
+scalar User_KeyOutput
+"""
+✨ Generated data input type for table 'AdherenceRecord'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input AdherenceRecord_Data {
+  """
+  ✨ Generated from Field `AdherenceRecord`.`userId` of type `UUID!`
+  """
+  userId: UUID
+  """
+  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `AdherenceRecord`.`userId` of type `UUID!`)
+  """
+  userId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AdherenceRecord`.`medicationId` of type `UUID!`
+  """
+  medicationId: UUID
+  """
+  ✨ `_expr` server value variant of `medicationId` (✨ Generated from Field `AdherenceRecord`.`medicationId` of type `UUID!`)
+  """
+  medicationId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AdherenceRecord`.`date` of type `Date!`
+  """
+  date: Date
+  """
+  ✨ `_date` server value variant of `date` (✨ Generated from Field `AdherenceRecord`.`date` of type `Date!`)
+  """
+  date_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `date` (✨ Generated from Field `AdherenceRecord`.`date` of type `Date!`)
+  """
+  date_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `date` (✨ Generated from Field `AdherenceRecord`.`date` of type `Date!`)
+  """
+  date_update: [Date_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AdherenceRecord`.`timeSlot` of type `String!`
+  """
+  timeSlot: String
+  """
+  ✨ `_expr` server value variant of `timeSlot` (✨ Generated from Field `AdherenceRecord`.`timeSlot` of type `String!`)
+  """
+  timeSlot_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AdherenceRecord`.`medication` of type `Medication!`
+  """
+  medication: Medication_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AdherenceRecord`.`user` of type `User!`
+  """
+  user: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AdherenceRecord`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `AdherenceRecord`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `AdherenceRecord`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `AdherenceRecord`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AdherenceRecord`.`taken` of type `Boolean!`
+  """
+  taken: Boolean
+  """
+  ✨ `_expr` server value variant of `taken` (✨ Generated from Field `AdherenceRecord`.`taken` of type `Boolean!`)
+  """
+  taken_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AdherenceRecord`.`takenAt` of type `Timestamp`
+  """
+  takenAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `takenAt` (✨ Generated from Field `AdherenceRecord`.`takenAt` of type `Timestamp`)
+  """
+  takenAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `takenAt` (✨ Generated from Field `AdherenceRecord`.`takenAt` of type `Timestamp`)
+  """
+  takenAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `takenAt` (✨ Generated from Field `AdherenceRecord`.`takenAt` of type `Timestamp`)
+  """
+  takenAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'AdherenceRecord'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input AdherenceRecord_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [AdherenceRecord_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: AdherenceRecord_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [AdherenceRecord_Filter!]
+  """
+  ✨ Generated from Field `AdherenceRecord`.`userId` of type `UUID!`
+  """
+  userId: UUID_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`medicationId` of type `UUID!`
+  """
+  medicationId: UUID_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`date` of type `Date!`
+  """
+  date: Date_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`timeSlot` of type `String!`
+  """
+  timeSlot: String_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`medication` of type `Medication!`
+  """
+  medication: Medication_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`user` of type `User!`
+  """
+  user: User_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`taken` of type `Boolean!`
+  """
+  taken: Boolean_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`takenAt` of type `Timestamp`
+  """
+  takenAt: Timestamp_Filter
+}
+"""
+✨ Generated first-row input type for table 'AdherenceRecord'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input AdherenceRecord_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [AdherenceRecord_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: AdherenceRecord_Filter
+}
+"""
+✨ Generated having input type for table 'AdherenceRecord'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input AdherenceRecord_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [AdherenceRecord_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: AdherenceRecord_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [AdherenceRecord_Having!]
+  """
+  ✨ Generated from Field `AdherenceRecord`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`date_count` of type `Int!`
+  """
+  date_count: Int_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`medicationId_count` of type `Int!`
+  """
+  medicationId_count: Int_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`takenAt_count` of type `Int!`
+  """
+  takenAt_count: Int_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`taken_count` of type `Int!`
+  """
+  taken_count: Int_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`timeSlot_count` of type `Int!`
+  """
+  timeSlot_count: Int_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`userId_count` of type `Int!`
+  """
+  userId_count: Int_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`date_min` of type `Date`
+  """
+  date_min: Date_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`takenAt_min` of type `Timestamp`
+  """
+  takenAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`date_max` of type `Date`
+  """
+  date_max: Date_Filter
+  """
+  ✨ Generated from Field `AdherenceRecord`.`takenAt_max` of type `Timestamp`
+  """
+  takenAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'AdherenceRecord'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input AdherenceRecord_Key {
+  """
+  ✨ Generated from Field `AdherenceRecord`.`userId` of type `UUID!`
+  """
+  userId: UUID
+  """
+  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `AdherenceRecord`.`userId` of type `UUID!`)
+  """
+  userId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AdherenceRecord`.`medicationId` of type `UUID!`
+  """
+  medicationId: UUID
+  """
+  ✨ `_expr` server value variant of `medicationId` (✨ Generated from Field `AdherenceRecord`.`medicationId` of type `UUID!`)
+  """
+  medicationId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AdherenceRecord`.`date` of type `Date!`
+  """
+  date: Date
+  """
+  ✨ `_date` server value variant of `date` (✨ Generated from Field `AdherenceRecord`.`date` of type `Date!`)
+  """
+  date_date: Date_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_expr` server value variant of `date` (✨ Generated from Field `AdherenceRecord`.`date` of type `Date!`)
+  """
+  date_expr: Date_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `AdherenceRecord`.`timeSlot` of type `String!`
+  """
+  timeSlot: String
+  """
+  ✨ `_expr` server value variant of `timeSlot` (✨ Generated from Field `AdherenceRecord`.`timeSlot` of type `String!`)
+  """
+  timeSlot_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'AdherenceRecord'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input AdherenceRecord_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: AdherenceRecord_Filter
+}
+"""
+✨ Generated order input type for table 'AdherenceRecord'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input AdherenceRecord_Order {
+  """
+  ✨ Generated from Field `AdherenceRecord`.`userId` of type `UUID!`
+  """
+  userId: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`medicationId` of type `UUID!`
+  """
+  medicationId: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`date` of type `Date!`
+  """
+  date: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`timeSlot` of type `String!`
+  """
+  timeSlot: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`medication` of type `Medication!`
+  """
+  medication: Medication_Order
+  """
+  ✨ Generated from Field `AdherenceRecord`.`user` of type `User!`
+  """
+  user: User_Order
+  """
+  ✨ Generated from Field `AdherenceRecord`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`taken` of type `Boolean!`
+  """
+  taken: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`takenAt` of type `Timestamp`
+  """
+  takenAt: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`date_count` of type `Int!`
+  """
+  date_count: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`medicationId_count` of type `Int!`
+  """
+  medicationId_count: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`takenAt_count` of type `Int!`
+  """
+  takenAt_count: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`taken_count` of type `Int!`
+  """
+  taken_count: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`timeSlot_count` of type `Int!`
+  """
+  timeSlot_count: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`userId_count` of type `Int!`
+  """
+  userId_count: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`date_min` of type `Date`
+  """
+  date_min: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`takenAt_min` of type `Timestamp`
+  """
+  takenAt_min: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`date_max` of type `Date`
+  """
+  date_max: OrderDirection
+  """
+  ✨ Generated from Field `AdherenceRecord`.`takenAt_max` of type `Timestamp`
+  """
+  takenAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'Friendship'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Friendship_Data {
+  """
+  ✨ Generated from Field `Friendship`.`requestorId` of type `UUID!`
+  """
+  requestorId: UUID
+  """
+  ✨ `_expr` server value variant of `requestorId` (✨ Generated from Field `Friendship`.`requestorId` of type `UUID!`)
+  """
+  requestorId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Friendship`.`recipientId` of type `UUID!`
+  """
+  recipientId: UUID
+  """
+  ✨ `_expr` server value variant of `recipientId` (✨ Generated from Field `Friendship`.`recipientId` of type `UUID!`)
+  """
+  recipientId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Friendship`.`recipient` of type `User!`
+  """
+  recipient: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Friendship`.`requestor` of type `User!`
+  """
+  requestor: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Friendship`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `Friendship`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `Friendship`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `Friendship`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Friendship`.`status` of type `String!`
+  """
+  status: String
+  """
+  ✨ `_expr` server value variant of `status` (✨ Generated from Field `Friendship`.`status` of type `String!`)
+  """
+  status_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'Friendship'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Friendship_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Friendship_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Friendship_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Friendship_Filter!]
+  """
+  ✨ Generated from Field `Friendship`.`requestorId` of type `UUID!`
+  """
+  requestorId: UUID_Filter
+  """
+  ✨ Generated from Field `Friendship`.`recipientId` of type `UUID!`
+  """
+  recipientId: UUID_Filter
+  """
+  ✨ Generated from Field `Friendship`.`recipient` of type `User!`
+  """
+  recipient: User_Filter
+  """
+  ✨ Generated from Field `Friendship`.`requestor` of type `User!`
+  """
+  requestor: User_Filter
+  """
+  ✨ Generated from Field `Friendship`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Friendship`.`status` of type `String!`
+  """
+  status: String_Filter
+}
+"""
+✨ Generated first-row input type for table 'Friendship'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Friendship_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Friendship_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Friendship_Filter
+}
+"""
+✨ Generated having input type for table 'Friendship'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Friendship_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Friendship_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Friendship_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Friendship_Having!]
+  """
+  ✨ Generated from Field `Friendship`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Friendship`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Friendship`.`recipientId_count` of type `Int!`
+  """
+  recipientId_count: Int_Filter
+  """
+  ✨ Generated from Field `Friendship`.`requestorId_count` of type `Int!`
+  """
+  requestorId_count: Int_Filter
+  """
+  ✨ Generated from Field `Friendship`.`status_count` of type `Int!`
+  """
+  status_count: Int_Filter
+  """
+  ✨ Generated from Field `Friendship`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Friendship`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'Friendship'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Friendship_Key {
+  """
+  ✨ Generated from Field `Friendship`.`requestorId` of type `UUID!`
+  """
+  requestorId: UUID
+  """
+  ✨ `_expr` server value variant of `requestorId` (✨ Generated from Field `Friendship`.`requestorId` of type `UUID!`)
+  """
+  requestorId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Friendship`.`recipientId` of type `UUID!`
+  """
+  recipientId: UUID
+  """
+  ✨ `_expr` server value variant of `recipientId` (✨ Generated from Field `Friendship`.`recipientId` of type `UUID!`)
+  """
+  recipientId_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'Friendship'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Friendship_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Friendship_Filter
+}
+"""
+✨ Generated order input type for table 'Friendship'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Friendship_Order {
+  """
+  ✨ Generated from Field `Friendship`.`requestorId` of type `UUID!`
+  """
+  requestorId: OrderDirection
+  """
+  ✨ Generated from Field `Friendship`.`recipientId` of type `UUID!`
+  """
+  recipientId: OrderDirection
+  """
+  ✨ Generated from Field `Friendship`.`recipient` of type `User!`
+  """
+  recipient: User_Order
+  """
+  ✨ Generated from Field `Friendship`.`requestor` of type `User!`
+  """
+  requestor: User_Order
+  """
+  ✨ Generated from Field `Friendship`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `Friendship`.`status` of type `String!`
+  """
+  status: OrderDirection
+  """
+  ✨ Generated from Field `Friendship`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Friendship`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Friendship`.`recipientId_count` of type `Int!`
+  """
+  recipientId_count: OrderDirection
+  """
+  ✨ Generated from Field `Friendship`.`requestorId_count` of type `Int!`
+  """
+  requestorId_count: OrderDirection
+  """
+  ✨ Generated from Field `Friendship`.`status_count` of type `Int!`
+  """
+  status_count: OrderDirection
+  """
+  ✨ Generated from Field `Friendship`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Friendship`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'Medication'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input Medication_Data {
+  """
+  ✨ Generated from Field `Medication`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Medication`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Medication`.`userId` of type `UUID!`
+  """
+  userId: UUID
+  """
+  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `Medication`.`userId` of type `UUID!`)
+  """
+  userId_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Medication`.`user` of type `User!`
+  """
+  user: User_Key @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Medication`.`capsuleQuantity` of type `Int!`
+  """
+  capsuleQuantity: Int
+  """
+  ✨ `_expr` server value variant of `capsuleQuantity` (✨ Generated from Field `Medication`.`capsuleQuantity` of type `Int!`)
+  """
+  capsuleQuantity_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `capsuleQuantity` (✨ Generated from Field `Medication`.`capsuleQuantity` of type `Int!`)
+  """
+  capsuleQuantity_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Medication`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `Medication`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `Medication`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `Medication`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Medication`.`dose` of type `String!`
+  """
+  dose: String
+  """
+  ✨ `_expr` server value variant of `dose` (✨ Generated from Field `Medication`.`dose` of type `String!`)
+  """
+  dose_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Medication`.`name` of type `String!`
+  """
+  name: String
+  """
+  ✨ `_expr` server value variant of `name` (✨ Generated from Field `Medication`.`name` of type `String!`)
+  """
+  name_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Medication`.`notes` of type `String`
+  """
+  notes: String
+  """
+  ✨ `_expr` server value variant of `notes` (✨ Generated from Field `Medication`.`notes` of type `String`)
+  """
+  notes_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Medication`.`takesAfternoon` of type `Boolean!`
+  """
+  takesAfternoon: Boolean
+  """
+  ✨ `_expr` server value variant of `takesAfternoon` (✨ Generated from Field `Medication`.`takesAfternoon` of type `Boolean!`)
+  """
+  takesAfternoon_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Medication`.`takesEvening` of type `Boolean!`
+  """
+  takesEvening: Boolean
+  """
+  ✨ `_expr` server value variant of `takesEvening` (✨ Generated from Field `Medication`.`takesEvening` of type `Boolean!`)
+  """
+  takesEvening_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `Medication`.`takesMorning` of type `Boolean!`
+  """
+  takesMorning: Boolean
+  """
+  ✨ `_expr` server value variant of `takesMorning` (✨ Generated from Field `Medication`.`takesMorning` of type `Boolean!`)
+  """
+  takesMorning_expr: Boolean_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'Medication'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Medication_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [Medication_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: Medication_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [Medication_Filter!]
+  """
+  ✨ Generated from Field `Medication`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `Medication`.`userId` of type `UUID!`
+  """
+  userId: UUID_Filter
+  """
+  ✨ Generated from Field `Medication`.`user` of type `User!`
+  """
+  user: User_Filter
+  """
+  ✨ Generated from Field `Medication`.`capsuleQuantity` of type `Int!`
+  """
+  capsuleQuantity: Int_Filter
+  """
+  ✨ Generated from Field `Medication`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `Medication`.`dose` of type `String!`
+  """
+  dose: String_Filter
+  """
+  ✨ Generated from Field `Medication`.`name` of type `String!`
+  """
+  name: String_Filter
+  """
+  ✨ Generated from Field `Medication`.`notes` of type `String`
+  """
+  notes: String_Filter
+  """
+  ✨ Generated from Field `Medication`.`takesAfternoon` of type `Boolean!`
+  """
+  takesAfternoon: Boolean_Filter
+  """
+  ✨ Generated from Field `Medication`.`takesEvening` of type `Boolean!`
+  """
+  takesEvening: Boolean_Filter
+  """
+  ✨ Generated from Field `Medication`.`takesMorning` of type `Boolean!`
+  """
+  takesMorning: Boolean_Filter
+  """
+  ✨ Generated from Field `Medication`.`adherenceRecords_on_medication` of type `[AdherenceRecord!]!`
+  """
+  adherenceRecords_on_medication: AdherenceRecord_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'Medication'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input Medication_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [Medication_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: Medication_Filter
+}
+"""
+✨ Generated having input type for table 'Medication'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input Medication_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [Medication_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: Medication_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [Medication_Having!]
+  """
+  ✨ Generated from Field `Medication`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `Medication`.`capsuleQuantity_count` of type `Int!`
+  """
+  capsuleQuantity_count: Int_Filter
+  """
+  ✨ Generated from Field `Medication`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `Medication`.`dose_count` of type `Int!`
+  """
+  dose_count: Int_Filter
+  """
+  ✨ Generated from Field `Medication`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `Medication`.`name_count` of type `Int!`
+  """
+  name_count: Int_Filter
+  """
+  ✨ Generated from Field `Medication`.`notes_count` of type `Int!`
+  """
+  notes_count: Int_Filter
+  """
+  ✨ Generated from Field `Medication`.`takesAfternoon_count` of type `Int!`
+  """
+  takesAfternoon_count: Int_Filter
+  """
+  ✨ Generated from Field `Medication`.`takesEvening_count` of type `Int!`
+  """
+  takesEvening_count: Int_Filter
+  """
+  ✨ Generated from Field `Medication`.`takesMorning_count` of type `Int!`
+  """
+  takesMorning_count: Int_Filter
+  """
+  ✨ Generated from Field `Medication`.`userId_count` of type `Int!`
+  """
+  userId_count: Int_Filter
+  """
+  ✨ Generated from Field `Medication`.`capsuleQuantity_sum` of type `Int`
+  """
+  capsuleQuantity_sum: Int_Filter
+  """
+  ✨ Generated from Field `Medication`.`capsuleQuantity_avg` of type `Float`
+  """
+  capsuleQuantity_avg: Float_Filter
+  """
+  ✨ Generated from Field `Medication`.`capsuleQuantity_min` of type `Int`
+  """
+  capsuleQuantity_min: Int_Filter
+  """
+  ✨ Generated from Field `Medication`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `Medication`.`capsuleQuantity_max` of type `Int`
+  """
+  capsuleQuantity_max: Int_Filter
+  """
+  ✨ Generated from Field `Medication`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'Medication'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input Medication_Key {
+  """
+  ✨ Generated from Field `Medication`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `Medication`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'Medication'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input Medication_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: Medication_Filter
+}
+"""
+✨ Generated order input type for table 'Medication'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input Medication_Order {
+  """
+  ✨ Generated from Field `Medication`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`userId` of type `UUID!`
+  """
+  userId: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`user` of type `User!`
+  """
+  user: User_Order
+  """
+  ✨ Generated from Field `Medication`.`capsuleQuantity` of type `Int!`
+  """
+  capsuleQuantity: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`dose` of type `String!`
+  """
+  dose: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`name` of type `String!`
+  """
+  name: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`notes` of type `String`
+  """
+  notes: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`takesAfternoon` of type `Boolean!`
+  """
+  takesAfternoon: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`takesEvening` of type `Boolean!`
+  """
+  takesEvening: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`takesMorning` of type `Boolean!`
+  """
+  takesMorning: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`capsuleQuantity_count` of type `Int!`
+  """
+  capsuleQuantity_count: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`dose_count` of type `Int!`
+  """
+  dose_count: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`name_count` of type `Int!`
+  """
+  name_count: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`notes_count` of type `Int!`
+  """
+  notes_count: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`takesAfternoon_count` of type `Int!`
+  """
+  takesAfternoon_count: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`takesEvening_count` of type `Int!`
+  """
+  takesEvening_count: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`takesMorning_count` of type `Int!`
+  """
+  takesMorning_count: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`userId_count` of type `Int!`
+  """
+  userId_count: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`capsuleQuantity_sum` of type `Int`
+  """
+  capsuleQuantity_sum: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`capsuleQuantity_avg` of type `Float`
+  """
+  capsuleQuantity_avg: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`capsuleQuantity_min` of type `Int`
+  """
+  capsuleQuantity_min: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`capsuleQuantity_max` of type `Int`
+  """
+  capsuleQuantity_max: OrderDirection
+  """
+  ✨ Generated from Field `Medication`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+}
+"""
+✨ Generated data input type for table 'User'. It includes all necessary fields for creating or upserting rows into table.
+"""
+input User_Data {
+  """
+  ✨ Generated from Field `User`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `User`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `User`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp
+  """
+  ✨ `_expr` server value variant of `createdAt` (✨ Generated from Field `User`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_expr: Timestamp_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_time` server value variant of `createdAt` (✨ Generated from Field `User`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_time: Timestamp_Relative @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `createdAt` (✨ Generated from Field `User`.`createdAt` of type `Timestamp!`)
+  """
+  createdAt_update: [Timestamp_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `User`.`displayName` of type `String`
+  """
+  displayName: String
+  """
+  ✨ `_expr` server value variant of `displayName` (✨ Generated from Field `User`.`displayName` of type `String`)
+  """
+  displayName_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `User`.`userId` of type `String!`
+  """
+  userId: String
+  """
+  ✨ `_expr` server value variant of `userId` (✨ Generated from Field `User`.`userId` of type `String!`)
+  """
+  userId_expr: String_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated filter input type for table 'User'. This input allows filtering objects using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input User_Filter {
+  """
+  Apply multiple filter conditions using `AND` logic.
+  """
+  _and: [User_Filter!]
+  """
+  Negate the result of the provided filter condition.
+  """
+  _not: User_Filter
+  """
+  Apply multiple filter conditions using `OR` logic.
+  """
+  _or: [User_Filter!]
+  """
+  ✨ Generated from Field `User`.`id` of type `UUID!`
+  """
+  id: UUID_Filter
+  """
+  ✨ Generated from Field `User`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: Timestamp_Filter
+  """
+  ✨ Generated from Field `User`.`displayName` of type `String`
+  """
+  displayName: String_Filter
+  """
+  ✨ Generated from Field `User`.`userId` of type `String!`
+  """
+  userId: String_Filter
+  """
+  ✨ Generated from Field `User`.`adherenceRecords_on_user` of type `[AdherenceRecord!]!`
+  """
+  adherenceRecords_on_user: AdherenceRecord_ListFilter
+  """
+  ✨ Generated from Field `User`.`friendships_on_recipient` of type `[Friendship!]!`
+  """
+  friendships_on_recipient: Friendship_ListFilter
+  """
+  ✨ Generated from Field `User`.`friendships_on_requestor` of type `[Friendship!]!`
+  """
+  friendships_on_requestor: Friendship_ListFilter
+  """
+  ✨ Generated from Field `User`.`medications_on_user` of type `[Medication!]!`
+  """
+  medications_on_user: Medication_ListFilter
+  """
+  ✨ Generated from Field `User`.`users_via_Friendship_on_recipient` of type `[User!]!`
+  """
+  users_via_Friendship_on_recipient: User_ListFilter
+  """
+  ✨ Generated from Field `User`.`users_via_Friendship_on_requestor` of type `[User!]!`
+  """
+  users_via_Friendship_on_requestor: User_ListFilter
+}
+"""
+✨ Generated first-row input type for table 'User'. This input selects the first row matching the filter criteria, ordered according to the specified conditions.
+"""
+input User_FirstRow {
+  """
+  Order the result by the specified fields.
+  """
+  orderBy: [User_Order!]
+  """
+  Filters rows based on the specified conditions.
+  """
+  where: User_Filter
+}
+"""
+✨ Generated having input type for table 'User'. This input allows you to filter groups during aggregate queries using various conditions. Use `_or`, `_and`, and `_not` to compose complex filters.
+"""
+input User_Having {
+  """
+  Apply multiple Having conditions using `AND` logic.
+  """
+  _and: [User_Having!]
+  """
+  Whether to apply DISTINCT to the aggregate function.
+  """
+  _distinct: Boolean
+  """
+  Negate the result of the provided Having condition.
+  """
+  _not: User_Having
+  """
+  Apply multiple Having conditions using `OR` logic.
+  """
+  _or: [User_Having!]
+  """
+  ✨ Generated from Field `User`.`_count` of type `Int!`
+  """
+  _count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`displayName_count` of type `Int!`
+  """
+  displayName_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`id_count` of type `Int!`
+  """
+  id_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`userId_count` of type `Int!`
+  """
+  userId_count: Int_Filter
+  """
+  ✨ Generated from Field `User`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: Timestamp_Filter
+  """
+  ✨ Generated from Field `User`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: Timestamp_Filter
+}
+"""
+✨ Generated key input type for table 'User'. It represents the primary key fields used to uniquely identify a row in the table.
+"""
+input User_Key {
+  """
+  ✨ Generated from Field `User`.`id` of type `UUID!`
+  """
+  id: UUID
+  """
+  ✨ `_expr` server value variant of `id` (✨ Generated from Field `User`.`id` of type `UUID!`)
+  """
+  id_expr: UUID_Expr @fdc_forbiddenInVariables
+}
+"""
+✨ Generated list filter input type for table 'User'. This input applies filtering logic based on the count or existence of related objects that matches certain criteria.
+"""
+input User_ListFilter {
+  """
+  The desired number of objects that match the condition (defaults to at least one).
+  """
+  count: Int_Filter = {gt:0}
+  """
+  Condition of the related objects to filter for.
+  """
+  exist: User_Filter
+}
+"""
+✨ Generated order input type for table 'User'. This input defines the sorting order of rows in query results based on one or more fields.
+"""
+input User_Order {
+  """
+  ✨ Generated from Field `User`.`id` of type `UUID!`
+  """
+  id: OrderDirection
+  """
+  ✨ Generated from Field `User`.`createdAt` of type `Timestamp!`
+  """
+  createdAt: OrderDirection
+  """
+  ✨ Generated from Field `User`.`displayName` of type `String`
+  """
+  displayName: OrderDirection
+  """
+  ✨ Generated from Field `User`.`userId` of type `String!`
+  """
+  userId: OrderDirection
+  """
+  ✨ Generated from Field `User`.`_count` of type `Int!`
+  """
+  _count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`createdAt_count` of type `Int!`
+  """
+  createdAt_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`displayName_count` of type `Int!`
+  """
+  displayName_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`id_count` of type `Int!`
+  """
+  id_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`userId_count` of type `Int!`
+  """
+  userId_count: OrderDirection
+  """
+  ✨ Generated from Field `User`.`createdAt_min` of type `Timestamp`
+  """
+  createdAt_min: OrderDirection
+  """
+  ✨ Generated from Field `User`.`createdAt_max` of type `Timestamp`
+  """
+  createdAt_max: OrderDirection
+}

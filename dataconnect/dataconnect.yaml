@@ -1,0 +1,13 @@
+specVersion: "v1"
+serviceId: "forgotmymeds-3693f-service"
+location: "us-east4"
+schemas:
+  - source: "./schema"
+    datasource:
+      postgresql:
+        database: "forgotmymeds-3693f-database"
+        cloudSql:
+          instanceId: "forgotmymeds-3693f-instance"
+          # schemaValidation: "STRICT"     # STRICT mode makes Postgres schema match Data Connect exactly.
+          # schemaValidation: "COMPATIBLE" # COMPATIBLE mode makes Postgres schema compatible with Data Connect.
+connectorDirs: ["./example"]

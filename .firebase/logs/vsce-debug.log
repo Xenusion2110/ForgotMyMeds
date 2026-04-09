@@ -1,0 +1,137 @@
+[debug] [2026-04-08T17:47:09.996Z] [Firebase Plugin] Activating Firebase extension.
+[info] [Firebase Plugin] Checked firebase-tools, is up to date!
+[debug] [2026-04-08T17:47:13.245Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2026-04-08T17:47:13.245Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-08T17:47:13.245Z] > authorizing via signed-in user (c.jpakala01@gmail.com)
+[debug] [2026-04-08T17:47:13.248Z] Checked if tokens are valid: true, expires at: 1775673839801
+[debug] [2026-04-08T17:47:13.248Z] Checked if tokens are valid: true, expires at: 1775673839801
+[debug] [2026-04-08T17:47:13.248Z] [Firebase Plugin] User found:  c.jpakala01@gmail.com
+[info] [Firebase Plugin] (Core:Project) New user detected, fetching projects
+[debug] [2026-04-08T17:47:13.250Z] Checked if tokens are valid: true, expires at: 1775673839801
+[debug] [2026-04-08T17:47:13.251Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-04-08T17:47:13.265Z] [Firebase Plugin] VSCode notification server listening on port 40001
+[info] [Firebase Plugin] Starting Data Connect toolkit (version 3.3.1) on port 50001
+[debug] [2026-04-08T17:47:14.059Z] I0408 13:47:14.048300   23692 control.go:100] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service 0f30] UpdateResources(): done
+Main schema: sources: schema/schema.gql [668B] 
+Connector "example": sources: 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0408 13:47:14.048300   23692 control.go:100] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service 0f30] UpdateResources(): done\nMain schema: sources: schema/schema.gql [668B] \nConnector \"example\": sources: \n"}}
+[debug] [2026-04-08T17:47:14.060Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2026-04-08T17:47:14.060Z] Ignoring unsupported arg: port {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: port"}}
+[debug] [2026-04-08T17:47:14.060Z] Starting Data Connect Emulator with command {"binary":"/Users/konnaa/.cache/firebase/emulators/dataconnect-emulator-3.3.1","args":["--logtostderr","-v=2","dev","--listen=localhost:50001","--config_dir=/Users/konnaa/VisualStudioProjects/ForgotMyMeds/dataconnect","--enable_output_schema_extensions=true","--enable_output_generated_sdk=true"],"optionalArgs":["listen","config_dir","enable_output_schema_extensions","enable_output_generated_sdk"],"joinArgs":true,"shell":false,"port":9399} {"metadata":{"emulator":{"name":"dataconnect"},"message":"Starting Data Connect Emulator with command {\"binary\":\"/Users/konnaa/.cache/firebase/emulators/dataconnect-emulator-3.3.1\",\"args\":[\"--logtostderr\",\"-v=2\",\"dev\",\"--listen=localhost:50001\",\"--config_dir=/Users/konnaa/VisualStudioProjects/ForgotMyMeds/dataconnect\",\"--enable_output_schema_extensions=true\",\"--enable_output_generated_sdk=true\"],\"optionalArgs\":[\"listen\",\"config_dir\",\"enable_output_schema_extensions\",\"enable_output_generated_sdk\"],\"joinArgs\":true,\"shell\":false,\"port\":9399}"}}
+[info] i  dataconnect: Data Connect Emulator logging to dataconnect-debug.log {"metadata":{"emulator":{"name":"dataconnect"},"message":"Data Connect Emulator logging to dataconnect-debug.log"}}
+[debug] [2026-04-08T17:47:14.084Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-04-08T17:47:14.084Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[debug] [2026-04-08T17:47:14.154Z] I0408 13:47:14.154129   23703 load.go:31] Reloading schema and connectors...
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0408 13:47:14.154129   23703 load.go:31] Reloading schema and connectors...\n"}}
+[debug] [2026-04-08T17:47:14.191Z] I0408 13:47:14.190044   23703 control.go:100] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service 3f28] UpdateResources(): done
+Main schema: sources: schema/schema.gql [668B] 
+Connector "example": sources: 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0408 13:47:14.190044   23703 control.go:100] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service 3f28] UpdateResources(): done\nMain schema: sources: schema/schema.gql [668B] \nConnector \"example\": sources: \n"}}
+[debug] [2026-04-08T17:47:14.252Z] E0408 13:47:14.251772   23703 load.go:95] Errors generating SDK: [connector "example"]: invalid Data Connect Connector no query found in connector
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"E0408 13:47:14.251772   23703 load.go:95] Errors generating SDK: [connector \"example\"]: invalid Data Connect Connector no query found in connector\n"}}
+[debug] [2026-04-08T17:47:14.253Z] I0408 13:47:14.253253   23703 collector.go:107] schema extensions wrote into "/Users/konnaa/VisualStudioProjects/ForgotMyMeds/dataconnect/.dataconnect/schema"
+Generated sources: main/implicit.gql [1835B] main/input.gql [41198B] main/relation.gql [20686B] main/query.gql [5059B] main/mutation.gql [13808B] prelude.gql [80888B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0408 13:47:14.253253   23703 collector.go:107] schema extensions wrote into \"/Users/konnaa/VisualStudioProjects/ForgotMyMeds/dataconnect/.dataconnect/schema\"\nGenerated sources: main/implicit.gql [1835B] main/input.gql [41198B] main/relation.gql [20686B] main/query.gql [5059B] main/mutation.gql [13808B] prelude.gql [80888B] \n"}}
+[debug] [2026-04-08T17:47:14.253Z] I0408 13:47:14.253650   23703 load.go:109] Finished reloading
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0408 13:47:14.253650   23703 load.go:109] Finished reloading\n"}}
+[debug] [2026-04-08T17:47:14.272Z] I0408 13:47:14.272473   23703 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50001
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0408 13:47:14.272473   23703 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50001\n"}}
+[debug] [2026-04-08T17:47:14.591Z] I0408 13:47:14.591347   23703 engine.go:209] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service 3f28] ExecuteGraphqlRead query IntrospectionQuery: succeeded. 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0408 13:47:14.591347   23703 engine.go:209] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service 3f28] ExecuteGraphqlRead query IntrospectionQuery: succeeded. \n"}}
+[debug] [2026-04-08T17:49:56.256Z] [Firebase Plugin] Value of process.env.MONOSPACE_ENV: undefined
+[debug] [2026-04-08T17:49:56.258Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2026-04-08T17:49:56.267Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-08T17:49:56.267Z] > authorizing via signed-in user (c.jpakala01@gmail.com)
+[debug] [2026-04-08T17:49:56.268Z] Checked if tokens are valid: true, expires at: 1775673839801
+[debug] [2026-04-08T17:49:56.268Z] [Firebase Plugin] User found:  c.jpakala01@gmail.com
+[info] [Firebase Plugin] (Core:Project) New user detected, fetching projects
+[debug] [2026-04-08T17:49:56.270Z] Checked if tokens are valid: true, expires at: 1775673839801
+[debug] [2026-04-08T17:49:56.271Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-04-08T17:49:56.275Z] [Firebase Plugin] Value of process.env.MONOSPACE_ENV: undefined
+[debug] [2026-04-08T17:49:56.275Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2026-04-08T17:49:56.277Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-08T17:49:56.278Z] > authorizing via signed-in user (c.jpakala01@gmail.com)
+[debug] [2026-04-08T17:49:56.279Z] Checked if tokens are valid: true, expires at: 1775673839801
+[debug] [2026-04-08T17:49:56.279Z] [Firebase Plugin] User found:  c.jpakala01@gmail.com
+[info] [Firebase Plugin] (Core:Project) New user detected, fetching projects
+[debug] [2026-04-08T17:49:56.279Z] Checked if tokens are valid: true, expires at: 1775673839801
+[debug] [2026-04-08T17:49:56.280Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-04-08T17:49:56.546Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-04-08T17:49:56.546Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[debug] [2026-04-08T17:49:56.557Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-04-08T17:49:56.557Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[debug] [2026-04-08T17:50:31.077Z] [Firebase Plugin] Received emulators started notification. Running detection.
+[debug] [2026-04-08T17:50:31.079Z] Found emulator hub locator: {"version":"15.13.0","origins":["http://127.0.0.1:4400","http://[::1]:4400"],"pid":23832}
+[debug] [2026-04-08T17:50:31.080Z] >>> [apiv2][query] GET http://127.0.0.1:4400/emulators [none]
+[debug] [2026-04-08T17:50:31.123Z] <<< [apiv2][status] GET http://127.0.0.1:4400/emulators 200
+[debug] [2026-04-08T17:50:31.123Z] <<< [apiv2][body] GET http://127.0.0.1:4400/emulators {"hub":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"name":"hub","host":"127.0.0.1","port":4400},"logging":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"name":"logging","host":"127.0.0.1","port":4500},"dataconnect":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":9399},{"address":"::1","family":"IPv6","port":9399}],"name":"dataconnect","host":"127.0.0.1","port":9399,"pid":23855,"timeout":10000}}
+[debug] [2026-04-08T17:50:31.282Z] I0408 13:50:31.282733   23703 engine.go:209] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service 3f28] ExecuteGraphqlRead query IntrospectionQuery: succeeded. 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0408 13:50:31.282733   23703 engine.go:209] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service 3f28] ExecuteGraphqlRead query IntrospectionQuery: succeeded. \n"}}
+[debug] [2026-04-08T17:51:07.754Z] [Firebase Plugin] Activating Firebase extension.
+[debug] [2026-04-08T17:51:08.168Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2026-04-08T17:51:08.169Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-08T17:51:08.169Z] > authorizing via signed-in user (c.jpakala01@gmail.com)
+[debug] [2026-04-08T17:51:08.172Z] Checked if tokens are valid: true, expires at: 1775673839801
+[debug] [2026-04-08T17:51:08.172Z] Checked if tokens are valid: true, expires at: 1775673839801
+[debug] [2026-04-08T17:51:08.172Z] [Firebase Plugin] User found:  c.jpakala01@gmail.com
+[info] [Firebase Plugin] (Core:Project) New user detected, fetching projects
+[debug] [2026-04-08T17:51:08.172Z] Checked if tokens are valid: true, expires at: 1775673839801
+[debug] [2026-04-08T17:51:08.173Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[info] [Firebase Plugin] Starting Data Connect toolkit (version 3.3.1) on port 50002
+[debug] [2026-04-08T17:51:09.308Z] I0408 13:51:09.296587   23923 control.go:100] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service bca7] UpdateResources(): done
+Main schema: sources: schema/schema.gql [668B] 
+Connector "example": sources: 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0408 13:51:09.296587   23923 control.go:100] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service bca7] UpdateResources(): done\nMain schema: sources: schema/schema.gql [668B] \nConnector \"example\": sources: \n"}}
+[debug] [2026-04-08T17:51:09.309Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2026-04-08T17:51:09.309Z] Ignoring unsupported arg: port {"metadata":{"emulator":{"name":"dataconnect"},"message":"Ignoring unsupported arg: port"}}
+[debug] [2026-04-08T17:51:09.309Z] Starting Data Connect Emulator with command {"binary":"/Users/konnaa/.cache/firebase/emulators/dataconnect-emulator-3.3.1","args":["--logtostderr","-v=2","dev","--listen=localhost:50002","--config_dir=/Users/konnaa/VisualStudioProjects/ForgotMyMeds/dataconnect","--enable_output_schema_extensions=true","--enable_output_generated_sdk=true"],"optionalArgs":["listen","config_dir","enable_output_schema_extensions","enable_output_generated_sdk"],"joinArgs":true,"shell":false,"port":9399} {"metadata":{"emulator":{"name":"dataconnect"},"message":"Starting Data Connect Emulator with command {\"binary\":\"/Users/konnaa/.cache/firebase/emulators/dataconnect-emulator-3.3.1\",\"args\":[\"--logtostderr\",\"-v=2\",\"dev\",\"--listen=localhost:50002\",\"--config_dir=/Users/konnaa/VisualStudioProjects/ForgotMyMeds/dataconnect\",\"--enable_output_schema_extensions=true\",\"--enable_output_generated_sdk=true\"],\"optionalArgs\":[\"listen\",\"config_dir\",\"enable_output_schema_extensions\",\"enable_output_generated_sdk\"],\"joinArgs\":true,\"shell\":false,\"port\":9399}"}}
+[info] i  dataconnect: Data Connect Emulator logging to dataconnect-debug.log {"metadata":{"emulator":{"name":"dataconnect"},"message":"Data Connect Emulator logging to dataconnect-debug.log"}}
+[debug] [2026-04-08T17:51:09.429Z] I0408 13:51:09.428805   23924 load.go:31] Reloading schema and connectors...
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0408 13:51:09.428805   23924 load.go:31] Reloading schema and connectors...\n"}}
+[debug] [2026-04-08T17:51:09.477Z] I0408 13:51:09.476596   23924 control.go:100] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service 5739] UpdateResources(): done
+Main schema: sources: schema/schema.gql [668B] 
+Connector "example": sources: 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0408 13:51:09.476596   23924 control.go:100] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service 5739] UpdateResources(): done\nMain schema: sources: schema/schema.gql [668B] \nConnector \"example\": sources: \n"}}
+[debug] [2026-04-08T17:51:09.496Z] E0408 13:51:09.496241   23924 load.go:95] Errors generating SDK: [connector "example"]: invalid Data Connect Connector no query found in connector
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"E0408 13:51:09.496241   23924 load.go:95] Errors generating SDK: [connector \"example\"]: invalid Data Connect Connector no query found in connector\n"}}
+[debug] [2026-04-08T17:51:09.499Z] I0408 13:51:09.498242   23924 collector.go:107] schema extensions wrote into "/Users/konnaa/VisualStudioProjects/ForgotMyMeds/dataconnect/.dataconnect/schema"
+Generated sources: main/input.gql [41198B] main/relation.gql [20686B] main/query.gql [5059B] main/mutation.gql [13808B] prelude.gql [80888B] main/implicit.gql [1835B] 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0408 13:51:09.498242   23924 collector.go:107] schema extensions wrote into \"/Users/konnaa/VisualStudioProjects/ForgotMyMeds/dataconnect/.dataconnect/schema\"\nGenerated sources: main/input.gql [41198B] main/relation.gql [20686B] main/query.gql [5059B] main/mutation.gql [13808B] prelude.gql [80888B] main/implicit.gql [1835B] \n"}}
+[debug] [2026-04-08T17:51:09.499Z] I0408 13:51:09.499219   23924 load.go:109] Finished reloading
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0408 13:51:09.499219   23924 load.go:109] Finished reloading\n"}}
+[debug] [2026-04-08T17:51:09.516Z] I0408 13:51:09.516248   23924 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50002
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0408 13:51:09.516248   23924 dev.go:104] Listening on address (HTTP + gRPC): 127.0.0.1:50002\n"}}
+[debug] [2026-04-08T17:51:09.584Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-04-08T17:51:09.584Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[debug] [2026-04-08T17:51:09.592Z] [Firebase Plugin] Value of process.env.MONOSPACE_ENV: undefined
+[debug] [2026-04-08T17:51:09.593Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2026-04-08T17:51:09.593Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-08T17:51:09.593Z] > authorizing via signed-in user (c.jpakala01@gmail.com)
+[debug] [2026-04-08T17:51:09.593Z] Checked if tokens are valid: true, expires at: 1775673839801
+[debug] [2026-04-08T17:51:09.593Z] [Firebase Plugin] User found:  c.jpakala01@gmail.com
+[info] [Firebase Plugin] (Core:Project) New user detected, fetching projects
+[debug] [2026-04-08T17:51:09.593Z] Checked if tokens are valid: true, expires at: 1775673839801
+[debug] [2026-04-08T17:51:09.593Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-04-08T17:51:09.595Z] [Firebase Plugin] Value of process.env.MONOSPACE_ENV: undefined
+[debug] [2026-04-08T17:51:09.595Z] [Firebase Plugin] requireAuthWrapper
+[debug] [2026-04-08T17:51:09.595Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-08T17:51:09.595Z] > authorizing via signed-in user (c.jpakala01@gmail.com)
+[debug] [2026-04-08T17:51:09.595Z] Checked if tokens are valid: true, expires at: 1775673839801
+[debug] [2026-04-08T17:51:09.595Z] [Firebase Plugin] User found:  c.jpakala01@gmail.com
+[info] [Firebase Plugin] (Core:Project) New user detected, fetching projects
+[debug] [2026-04-08T17:51:09.595Z] Checked if tokens are valid: true, expires at: 1775673839801
+[debug] [2026-04-08T17:51:09.595Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects pageSize=1000
+[debug] [2026-04-08T17:51:09.598Z] Found emulator hub locator: {"version":"15.13.0","origins":["http://127.0.0.1:4400","http://[::1]:4400"],"pid":23832}
+[debug] [2026-04-08T17:51:09.598Z] >>> [apiv2][query] GET http://127.0.0.1:4400/emulators [none]
+[debug] [2026-04-08T17:51:09.657Z] I0408 13:51:09.657225   23924 engine.go:209] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service 5739] ExecuteGraphqlRead query IntrospectionQuery: succeeded. 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0408 13:51:09.657225   23924 engine.go:209] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service 5739] ExecuteGraphqlRead query IntrospectionQuery: succeeded. \n"}}
+[debug] [2026-04-08T17:51:09.680Z] <<< [apiv2][status] GET http://127.0.0.1:4400/emulators 200
+[debug] [2026-04-08T17:51:09.680Z] <<< [apiv2][body] GET http://127.0.0.1:4400/emulators {"hub":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"name":"hub","host":"127.0.0.1","port":4400},"logging":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"name":"logging","host":"127.0.0.1","port":4500},"dataconnect":{"listen":[{"address":"127.0.0.1","family":"IPv4","port":9399},{"address":"::1","family":"IPv6","port":9399}],"name":"dataconnect","host":"127.0.0.1","port":9399,"pid":23855,"timeout":10000}}
+[debug] [2026-04-08T17:51:09.798Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-04-08T17:51:09.798Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[debug] [2026-04-08T17:51:09.850Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects 200
+[debug] [2026-04-08T17:51:09.850Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects [omitted]
+[debug] [2026-04-08T17:51:14.035Z] [Firebase Plugin] Received emulators shutdown notification.
+[debug] [2026-04-08T17:51:14.040Z] [Firebase Plugin] Received emulators shutdown notification.
+[info] [Firebase Plugin] Stopping Data Connect toolkit
+[warn] ⚠  Data Connect Emulator has exited upon receiving signal: SIGINT 

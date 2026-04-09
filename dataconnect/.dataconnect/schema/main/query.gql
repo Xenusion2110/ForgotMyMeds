@@ -1,0 +1,204 @@
+extend type Query {
+  """
+  ✨ Look up a single `AdherenceRecord` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  adherenceRecord(
+    """
+    The key used to identify the object.
+    """
+    key: AdherenceRecord_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: AdherenceRecord_FirstRow
+  ): AdherenceRecord @fdc_generated(from: "AdherenceRecord", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Friendship` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  friendship(
+    """
+    The key used to identify the object.
+    """
+    key: Friendship_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Friendship_FirstRow
+  ): Friendship @fdc_generated(from: "Friendship", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `Medication` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  medication(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Medication_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Medication_FirstRow
+  ): Medication @fdc_generated(from: "Medication", purpose: QUERY_SINGLE)
+  """
+  ✨ Look up a single `User` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  user(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+  ): User @fdc_generated(from: "User", purpose: QUERY_SINGLE)
+  """
+  ✨ List `AdherenceRecord` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  adherenceRecords(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: AdherenceRecord_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [AdherenceRecord_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: AdherenceRecord_Having
+  ): [AdherenceRecord!]! @fdc_generated(from: "AdherenceRecord", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Friendship` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  friendships(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Friendship_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Friendship_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Friendship_Having
+  ): [Friendship!]! @fdc_generated(from: "Friendship", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `Medication` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  medications(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: Medication_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [Medication_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: Medication_Having
+  ): [Medication!]! @fdc_generated(from: "Medication", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `User` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  users(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: User_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [User_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: User_Having
+  ): [User!]! @fdc_generated(from: "User", purpose: QUERY_MULTIPLE)
+}

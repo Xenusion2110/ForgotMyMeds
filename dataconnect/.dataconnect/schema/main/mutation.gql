@@ -1,0 +1,430 @@
+extend type Mutation {
+  """
+  ✨ Insert a single `AdherenceRecord` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  adherenceRecord_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: AdherenceRecord_Data!
+  ): AdherenceRecord_KeyOutput! @fdc_generated(from: "AdherenceRecord", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Friendship` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  friendship_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Friendship_Data!
+  ): Friendship_KeyOutput! @fdc_generated(from: "Friendship", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Medication` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  medication_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Medication_Data!
+  ): Medication_KeyOutput! @fdc_generated(from: "Medication", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `User` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  user_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: User_Data!
+  ): User_KeyOutput! @fdc_generated(from: "User", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert `AdherenceRecord` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  adherenceRecord_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [AdherenceRecord_Data!]!
+  ): [AdherenceRecord_KeyOutput!]! @fdc_generated(from: "AdherenceRecord", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Friendship` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  friendship_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Friendship_Data!]!
+  ): [Friendship_KeyOutput!]! @fdc_generated(from: "Friendship", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Medication` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  medication_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Medication_Data!]!
+  ): [Medication_KeyOutput!]! @fdc_generated(from: "Medication", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `User` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  user_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [User_Data!]!
+  ): [User_KeyOutput!]! @fdc_generated(from: "User", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert or update a single `AdherenceRecord` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `AdherenceRecord`.
+  """
+  adherenceRecord_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: AdherenceRecord_Data!
+  ): AdherenceRecord_KeyOutput! @fdc_generated(from: "AdherenceRecord", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Friendship` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Friendship`.
+  """
+  friendship_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Friendship_Data!
+  ): Friendship_KeyOutput! @fdc_generated(from: "Friendship", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Medication` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Medication`.
+  """
+  medication_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Medication_Data!
+  ): Medication_KeyOutput! @fdc_generated(from: "Medication", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `User` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
+  """
+  user_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: User_Data!
+  ): User_KeyOutput! @fdc_generated(from: "User", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update `AdherenceRecord` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `AdherenceRecord`.
+  """
+  adherenceRecord_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [AdherenceRecord_Data!]!
+  ): [AdherenceRecord_KeyOutput!]! @fdc_generated(from: "AdherenceRecord", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Friendship` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Friendship`.
+  """
+  friendship_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Friendship_Data!]!
+  ): [Friendship_KeyOutput!]! @fdc_generated(from: "Friendship", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Medication` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Medication`.
+  """
+  medication_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Medication_Data!]!
+  ): [Medication_KeyOutput!]! @fdc_generated(from: "Medication", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `User` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
+  """
+  user_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [User_Data!]!
+  ): [User_KeyOutput!]! @fdc_generated(from: "User", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Update a single `AdherenceRecord` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `AdherenceRecord` or `null` if not found.
+  """
+  adherenceRecord_update(
+    """
+    The key used to identify the object.
+    """
+    key: AdherenceRecord_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: AdherenceRecord_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: AdherenceRecord_Data!
+  ): AdherenceRecord_KeyOutput @fdc_generated(from: "AdherenceRecord", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Friendship` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Friendship` or `null` if not found.
+  """
+  friendship_update(
+    """
+    The key used to identify the object.
+    """
+    key: Friendship_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Friendship_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Friendship_Data!
+  ): Friendship_KeyOutput @fdc_generated(from: "Friendship", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Medication` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Medication` or `null` if not found.
+  """
+  medication_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Medication_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Medication_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Medication_Data!
+  ): Medication_KeyOutput @fdc_generated(from: "Medication", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `User` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `User` or `null` if not found.
+  """
+  user_update(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: User_Data!
+  ): User_KeyOutput @fdc_generated(from: "User", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update `AdherenceRecord` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  adherenceRecord_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: AdherenceRecord_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: AdherenceRecord_Data!
+  ): Int! @fdc_generated(from: "AdherenceRecord", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Friendship` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  friendship_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Friendship_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Friendship_Data!
+  ): Int! @fdc_generated(from: "Friendship", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Medication` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  medication_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Medication_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Medication_Data!
+  ): Int! @fdc_generated(from: "Medication", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `User` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  user_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: User_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: User_Data!
+  ): Int! @fdc_generated(from: "User", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Delete a single `AdherenceRecord` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  adherenceRecord_delete(
+    """
+    The key used to identify the object.
+    """
+    key: AdherenceRecord_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: AdherenceRecord_FirstRow
+  ): AdherenceRecord_KeyOutput @fdc_generated(from: "AdherenceRecord", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Friendship` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  friendship_delete(
+    """
+    The key used to identify the object.
+    """
+    key: Friendship_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Friendship_FirstRow
+  ): Friendship_KeyOutput @fdc_generated(from: "Friendship", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Medication` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  medication_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: Medication_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Medication_FirstRow
+  ): Medication_KeyOutput @fdc_generated(from: "Medication", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `User` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  user_delete(
+    """
+    The unique ID of the object.
+    """
+    id: UUID
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+  ): User_KeyOutput @fdc_generated(from: "User", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete `AdherenceRecord` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  adherenceRecord_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: AdherenceRecord_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "AdherenceRecord", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Friendship` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  friendship_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Friendship_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Friendship", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Medication` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  medication_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Medication_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Medication", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `User` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  user_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: User_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "User", purpose: DELETE_MULTIPLE)
+}

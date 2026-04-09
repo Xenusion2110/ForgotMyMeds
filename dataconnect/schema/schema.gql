@@ -1,0 +1,34 @@
+type User @table {
+  userId: String! @unique
+  createdAt: Timestamp!
+  displayName: String
+}
+
+type Medication @table {
+  user: User!
+  name: String!
+  dose: String!
+  capsuleQuantity: Int!
+  createdAt: Timestamp!
+  notes: String
+  takesMorning: Boolean!
+  takesAfternoon: Boolean!
+  takesEvening: Boolean!
+}
+
+type AdherenceRecord @table(key: ["user", "medication", "date", "timeSlot"]) {
+  user: User!
+  medication: Medication!
+  date: Date!
+  timeSlot: String!
+  taken: Boolean!
+  takenAt: Timestamp
+  createdAt: Timestamp!
+}
+
+type Friendship @table(key: ["requestor", "recipient"]) {
+  requestor: User!
+  recipient: User!
+  status: String!
+  createdAt: Timestamp!
+}

@@ -135,3 +135,5 @@ Generated sources: main/input.gql [41198B] main/relation.gql [20686B] main/query
 [debug] [2026-04-08T17:51:14.040Z] [Firebase Plugin] Received emulators shutdown notification.
 [info] [Firebase Plugin] Stopping Data Connect toolkit
 [warn] ⚠  Data Connect Emulator has exited upon receiving signal: SIGINT 
+[debug] [2026-04-09T16:59:28.052Z] I0409 12:59:28.050723   23924 engine.go:209] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service 5739] ExecuteGraphqlRead query IntrospectionQuery: succeeded. 
+ {"metadata":{"emulator":{"name":"dataconnect"},"message":"I0409 12:59:28.050723   23924 engine.go:209] [projects/emulator/locations/emulator/services/forgotmymeds-3693f-service 5739] ExecuteGraphqlRead query IntrospectionQuery: succeeded. \n"}}

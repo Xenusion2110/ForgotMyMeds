@@ -23,6 +23,9 @@ import styles from "../styles";
 import { colors } from "../../constants/colors";
 import { auth } from "../../services/firebaseConfig"; 
 
+import { httpsCallable, getFunctions } from "firebase/functions";
+const functions = getFunctions();
+
 export default function Login() {
   const router = useRouter();
   const { firstTime } = useLocalSearchParams();
@@ -76,8 +79,16 @@ export default function Login() {
         password
       );
 
+      const getUser = httpsCallable(functions, "getUser");
+      const userSnapshot = await getUser();
+
       console.log("Logged in user:", userCred.user);
 
+      if(isFirstTime) {
+        router.replace("duprconnect");
+      } else {
+        router.replace("/(tabs)/home/dashboard");
+      }
       
       if (isFirstTime) {
         router.replace("/duprconnect");

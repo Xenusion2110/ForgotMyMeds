@@ -1,22 +1,95 @@
 // app/index.js
 
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Text, View, Pressable, Animated, Image } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
+import { httpsCallable, getFunctions } from "firebase/functions";
+import { auth } from "../services/firebaseConfig";
+const functions = getFunctions();
+
 import styles from "./styles";
 import { colors } from "../constants/colors";
 
 import Logo from "../assets/img/Logo.jpg";
 
-export default function MainPage() {
+export default function App() {
   const router = useRouter();
 
   const scaleCreate = useRef(new Animated.Value(1)).current;
   const scaleLogin = useRef(new Animated.Value(1)).current;
+
+
+  const [medications, setMedications] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [name,setName] = useState("");
+  const [dose, setDose] = useState("");
+  const [capsuleQuantity, setCapsuleQuantity] = useState("");
+  const [takesMorning, setTakesMorning] = useState(false);
+  const[takesAfternoon, setTakesAfternoon] = useState(false);
+  const [takesEvening, setTakesEvening] = useState(false);
+  const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    fetchMedications();
+  }, []);
+
+  const fetchMedications = async () => {
+    try {
+      setLoading(true);
+      const getAllMedications = httpsCallable(functions, "getAllMedications");
+      const result = await getAllMedications();
+      setMedications(result.data || []);
+    } catch (err) {
+      console.error("Error fetching meds:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddMedication = async () => {
+    try {
+      setLoading(true);
+      const createMedication = httpsCallable(functions, "createMedication");
+      await createMedication ({
+        name,
+        dose,
+        capsuleQuantity: parseInt(capsuleQuantity),
+        takesMorning,
+        takesAfternoon,
+        takesEvening,
+        notes,
+      });
+
+      setName("");
+      setDose("");
+      setCapsuleQuantity("");
+      setTakesMorning(false);
+      setTakesAfternoon(false);
+      setTakesEvening(false);
+      setNotes("");
+      setShowForm(false);
+      fetchMedications();
+    } catch (err){
+      console.error("Error adding meds:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteMedication = async (medicationId) => {
+    try{
+      const deleteMedication = httpsCallable(functions, "deleteMedication");
+      await deleteMedication({ medicationId });
+      fetchMedications();
+    } catch (err) {
+      console.error("Error deleting med:", err);
+    }
+  };
 
   const pressIn = (anim) =>
     Animated.spring(anim, { toValue: 0.85, duration: 180, useNativeDriver: true }).start();
@@ -97,4 +170,6 @@ export default function MainPage() {
       </View>
     </SafeAreaView>
   );
-}
+};
+
+

@@ -1,5 +1,5 @@
 // app/(tabs)/home/index.js
-
+import { useState } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -7,7 +7,8 @@ import {
   Pressable,
   TextInput,
   TouchableOpacity,
-  FlatList, 
+  FlatList,
+  Modal,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -97,10 +98,7 @@ export default function Home() {
               Monitor medication adherence
             </Text>
       
-            <TouchableOpacity style={styles.button}>
-              <Ionicons name="add" size={18} color="#fff" />
-              <Text style={styles.buttonText}>Add Patient</Text>
-            </TouchableOpacity>
+            <AddPatient/>
       
             <View style={styles.searchBox}>
               <Ionicons name="search" size={18} color="#9CA3AF" />
@@ -148,6 +146,71 @@ const StatCard = ({ title, value, subtitle, icon, color }) => {
     </View>
   );
 };
+
+const AddPatient = ({}) => {
+  const [modalVisible, setModalVisible] = useState(false);
+
+  return (
+    <View>
+      {/* Button to open modal */}
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => setModalVisible(true)}
+      >
+        <Text style={styles.buttonText}>Add Friend/Family</Text>
+      </TouchableOpacity>
+
+      {/* Modal */}
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View style={styles.overlay}>
+          <View style={styles.container}>
+            {/* Header */}
+            <View style={styles.header}>
+              <Text style={styles.title}>Add Friend/Family</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Text style={styles.close}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Form */}
+            <Text style={styles.label}>Patient Name *</Text>
+            <TextInput placeholder="Full name" style={styles.input} />
+
+            <Text style={styles.label}>Patient Email *</Text>
+            <TextInput
+              placeholder="patient@email.com"
+              style={styles.input}
+            />
+
+            <Text style={styles.label}>Date of Birth</Text>
+            <TextInput placeholder="mm/dd/yyyy" style={styles.input} />
+
+            <Text style={styles.label}>Notes</Text>
+            <TextInput
+              placeholder="Allergies, conditions, etc."
+              style={[styles.input, styles.textArea]}
+              multiline
+            />
+
+            {/* Footer Buttons */}
+            <View style={styles.footer}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.addBtn}>
+                <Text style={{ color: "#fff" }}>Add Patient</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
 
 const patients = [
   {
@@ -285,7 +348,7 @@ const styles = StyleSheet.create({
   button: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#3B82F6",
+    backgroundColor: colors.primaryEnd,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 10,
@@ -360,4 +423,68 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
+  screen: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  openText: {
+    color: "#fff",
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  container: {
+    width: "90%",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  close: {
+    fontSize: 18,
+  },
+  label: {
+    marginTop: 10,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 4,
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: "top",
+  },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 20,
+  },
+  cancelBtn: {
+    padding: 10,
+    marginRight: 10,
+    backgroundColor: "#eee",
+    borderRadius: 8,
+  },
+  addBtn: {
+    padding: 10,
+    backgroundColor: colors.primaryEnd,
+    borderRadius: 8,
+  },
+
+  
 });

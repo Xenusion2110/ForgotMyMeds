@@ -2,8 +2,8 @@
 
 export const colors = {
     background: "#ffffff",
-    primaryStart: "#6A8FD2",
-    primaryEnd: "#3274EF",
+    primaryStart: "#77e9b4",
+    primaryEnd: "#3ce466",
     textDark: "#212325",
     textGray: "#6B7280",
     border: "#E5E7EB",

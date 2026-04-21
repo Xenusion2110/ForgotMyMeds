@@ -160,7 +160,7 @@ export default function CreateAccount() {
               <View style={styles.content}>
                 <Text style={styles.title}>Create</Text>
                 <Text style={createStyles.subTitle}>
-                  Make your Smashr account in seconds
+                  Make your account in seconds
                 </Text>
 
                 {/* FIRST NAME */}

@@ -4,9 +4,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
+  Modal,
 } from "react-native";
+import { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../../../constants/colors";
+import { Picker } from "@react-native-picker/picker";
+
 
 export default function App() {
   return (
@@ -22,13 +26,7 @@ export default function App() {
         </View>
 
         <View style={styles.headerButtons}>
-          <TouchableOpacity style={styles.secondaryBtn}>
-            <Text>+ Log Dose</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.primaryBtn}>
-            <Text style={{ color: "#fff" }}>Generate Today's Doses</Text>
-          </TouchableOpacity>
+          <LogDose/>
         </View>
       </View>
 
@@ -42,65 +40,145 @@ export default function App() {
         </View>
       </View>
 
-      {/* List */}
-      <FlatList
-        data={doses}
-        keyExtractor={(item) => item.id}
-        renderItem={renderDose}
-        contentContainerStyle={{ paddingBottom: 40 }}
-      />
+      <MedicineChecklist/>
     </View>
     </SafeAreaView>
   );
 }
 
-const renderDose = ({ item }) => {
-    return (
-      <View style={styles.card}>
-        <View style={styles.row}>
-          <Text style={styles.time}>{item.time}</Text>
-          <Text style={styles.name}>{item.name}</Text>
-        </View>
+const initialData = {
+  Morning: [
+    { id: "1", name: "Vitamin C", taken: false },
+    { id: "2", name: "Blood Pressure Pill", taken: false },
+  ],
+  Afternoon: [
+    { id: "3", name: "Antibiotic", taken: false },
+  ],
+  Night: [
+    { id: "4", name: "Melatonin", taken: false },
+    { id: "5", name: "Pain Reliever", taken: false },
+  ],
+};
 
-        <View style={styles.actions}>
-          {item.status === "missed" && (
-            <View style={styles.badgeMissed}>
-              <Text style={styles.badgeText}>✕ Missed</Text>
-            </View>
-          )}
+const MedicineChecklist = ({}) => {
+  const [meds, setMeds] = useState(initialData);
 
-          {item.status === "taken" && (
-            <View style={styles.badgeTakenLight}>
-              <Text style={styles.badgeText}>✓ Taken</Text>
-            </View>
-          )}
-
-          {item.status === "pending" && (
-            <View style={styles.actionRow}>
-              <TouchableOpacity>
-                <Text style={styles.skip}>Skip</Text>
-              </TouchableOpacity>
-              <TouchableOpacity>
-                <Text style={styles.missed}>Missed</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.takenBtn}>
-                <Text style={styles.takenText}>✓ Taken</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-      </View>
-      
+  const toggleTaken = (section, id) => {
+    const updatedSection = meds[section].map((item) =>
+      item.id === id ? { ...item, taken: !item.taken } : item
     );
+
+    setMeds({ ...meds, [section]: updatedSection });
   };
 
-const doses = [
-  { id: "1", time: "07:00", name: "Omeprazole", status: "missed" },
-  { id: "2", time: "07:00", name: "Omeprazole", status: "pending" },
-  { id: "3", time: "08:00", name: "Lisinopril", status: "taken" },
-  { id: "4", time: "08:00", name: "Lisinopril", status: "pending" },
-  { id: "5", time: "08:00", name: "Metformin", status: "taken" },
-];
+  const renderItem = (section) => ({ item }) => (
+    <TouchableOpacity
+      style={[
+        styles2.item,
+        item.taken && styles2.itemTaken
+      ]}
+      onPress={() => toggleTaken(section, item.id)}
+    >
+      <Text style={styles2.text}>
+        {item.taken ? "✅ " : "⬜ "} {item.name}
+      </Text>
+    </TouchableOpacity>
+  );
+
+  const renderSection = (title) => (
+    <View style={styles2.section}>
+      <Text style={styles2.header}>{title}</Text>
+      <FlatList
+        data={meds[title]}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem(title)}
+      />
+    </View>
+  );
+
+  return (
+    <View style={styles2.container}>
+      {renderSection("Morning")}
+      {renderSection("Afternoon")}
+      {renderSection("Night")}
+    </View>
+  );
+}
+
+
+const LogDose = ({onClose}) => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [medication, setMedication] = useState("");
+  const [time, setTime] = useState("");
+  const [showPicker, setShowPicker] = useState(false);
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+
+  return (
+    <View style={styles3.headerButtons}>
+      {/* Button to open modal */}
+      <TouchableOpacity
+        style={styles3.button}
+        onPress={() => setModalVisible(true)}
+      >
+        <Text style={styles3.buttonText}>Add Dose</Text>
+      </TouchableOpacity>
+
+      {/* Modal */}
+      <Modal transparent visible={modalVisible} animationType="fade">
+      <View style={styles3.overlay}>
+        <View style={styles3.container}>
+          {/* Header */}
+          <View style={styles3.header}>
+            <Text style={styles3.title}>Log a Dose</Text>
+          </View>
+
+          {/* Medication */}
+          <Text style={styles3.label}>Medication</Text>
+          <View style={styles3.dropdown}>
+            <Picker
+              selectedValue={medication}
+              onValueChange={(itemValue) => setMedication(itemValue)}
+            >
+              <Picker.Item label="Select Medication" value="" />
+              <Picker.Item label="Aspirin" value="aspirin" />
+              <Picker.Item label="Ibuprofen" value="ibuprofen" />
+            </Picker>
+          </View>
+
+          <Text style={styles3.label}>Time</Text>
+          <View style={styles3.dropdown}>
+            <Picker
+              selectedValue={time}
+              onValueChange={(itemValue) => setTime(itemValue)}
+            >
+              <Picker.Item label="Select Time" value="" />
+              <Picker.Item label="Morning" value="morning" />
+              <Picker.Item label="Afternoon" value="afternoon" />
+              <Picker.Item label="Night" value="night" />
+            </Picker>
+          </View>
+
+          {/* Buttons */}
+          <TouchableOpacity style={styles3.primaryButton}>
+            <Text style={styles3.primaryText}>Log Dose</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles3.secondaryButton} onPress={() => setModalVisible(false)}>
+            <Text style={styles3.secondaryText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+    </View>
+  );
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -130,7 +208,7 @@ const styles = StyleSheet.create({
   },
 
   primaryBtn: {
-    backgroundColor: "#3b82f6",
+    backgroundColor: colors.primaryEnd,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
@@ -241,4 +319,122 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 12,
   },
+
 });
+
+const styles2 = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#f5f5f5",
+  },
+  section: {
+    marginBottom: 25,
+  },
+  header: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  item: {
+    padding: 15,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    marginBottom: 10,
+    elevation: 2,
+  },
+  itemTaken: {
+    backgroundColor: "#d4edda",
+  },
+  text: {
+    fontSize: 16,
+  },
+});
+
+const styles3 = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  container: {
+    width: "90%",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  close: {
+    fontSize: 18,
+  },
+  label: {
+    marginTop: 10,
+    fontSize: 18,
+  },
+  dropdown: {
+    borderWidth: 1,
+    borderColor: colors.primaryEnd,
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  timeInput: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    padding: 14,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  timeText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  primaryButton: {
+    backgroundColor: colors.primaryEnd,
+    padding: 14,
+    borderRadius: 12,
+    marginTop: 20,
+    alignItems: "center",
+  },
+  primaryText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+  secondaryButton: {
+    backgroundColor: "#f2f2f2",
+    padding: 14,
+    borderRadius: 12,
+    marginTop: 10,
+    alignItems: "center",
+  },
+  secondaryText: {
+    color: "#333",
+  },
+
+  button: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.primaryEnd,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    alignSelf: "flex-start",
+    marginBottom: 16,
+  },
+  buttonText: {
+    color: "#fff",
+    marginLeft: 6,
+    fontWeight: "600",
+  },
+
+})

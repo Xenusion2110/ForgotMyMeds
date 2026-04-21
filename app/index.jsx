@@ -81,18 +81,7 @@ export default function MainPage() {
           {/* DIVIDER */}
           <View style={styles.divider} />
 
-          {/* SOCIAL ICONS */}
-          <View style={styles.footer}>
-            <View style={styles.bottomIcons}>
-              <Pressable style={styles.iconButton}>
-                <FontAwesome name="google" size={26} color="#DB4437" />
-              </Pressable>
-
-              <Pressable style={styles.iconButton}>
-                <Ionicons name="logo-apple" size={28} color={colors.black} />
-              </Pressable>
-            </View>
-          </View>
+        
         </View>
       </View>
     </SafeAreaView>

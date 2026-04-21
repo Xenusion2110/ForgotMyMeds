@@ -1,14 +1,18 @@
 import {
   View,
   Text,
-  StyleSheet,
   TextInput,
   TouchableOpacity,
-  FlatList,
+  StyleSheet,
+  ScrollView,
+  Modal,
 } from "react-native";
+import {useState} from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
+
+const COLORS = ['#4A90E2', '#6FCF97', '#9B51E0', '#F2994A', '#EB5757', '#E573A3'];
 
 export default function App() {
   return (
@@ -18,11 +22,7 @@ export default function App() {
       <Text style={styles.title}>Medications</Text>
       <Text style={styles.subtitle}>Manage all your medications</Text>
 
-      {/* Add Button */}
-      <TouchableOpacity style={styles.addButton}>
-        <Ionicons name="add" size={20} color="#fff" />
-        <Text style={styles.addButtonText}>Add Medication</Text>
-      </TouchableOpacity>
+      <AddMedication/>
 
       {/* Search */}
       <View style={styles.searchContainer}>
@@ -62,6 +62,109 @@ export default function App() {
   );
 }
 
+const AddMedication = ({}) => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedColor, setSelectedColor] = useState(COLORS[0]);
+
+  return (
+    <View>
+      {/* Button to open modal */}
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => setModalVisible(true)}
+      >
+        <Ionicons name="add" size={20} color="#fff" />
+        <Text style={styles.addButtonText}>Add Medication</Text>
+      </TouchableOpacity>
+
+      {/* Modal */}
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View style={styles.overlay}>
+          <View style={styles.container}>
+            {/* Header */}
+            <View style={styles.header}>
+              <Text style={styles.title}>Add Patient</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Text style={styles.close}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+          {/* Medication Name */}
+          <Text style={styles.label}>Medication Name *</Text>
+          <TextInput
+            placeholder="e.g. Aspirin"
+            placeholderTextColor="#999"
+            style={styles.input}
+          />
+
+          {/* Dosage */}
+          <Text style={styles.label}>Dosage *</Text>
+          <TextInput
+            placeholder="e.g. 500mg"
+            placeholderTextColor="#999"
+            style={styles.input}
+          />
+
+          {/* Frequency */}
+          <Text style={styles.label}>Frequency *</Text>
+          <TouchableOpacity style={styles.dropdown}>
+            <Text style={styles.dropdownText}>Once daily</Text>
+            <Text style={styles.dropdownArrow}>⌄</Text>
+          </TouchableOpacity>
+
+          {/* Color Tag */}
+          <Text style={styles.label}>Color Tag</Text>
+          <View style={styles.colorRow}>
+            {COLORS.map((color) => {
+              const isSelected = color === selectedColor;
+              return (
+                <TouchableOpacity
+                  key={color}
+                  onPress={() => setSelectedColor(color)}
+                  style={[
+                    styles.colorCircle,
+                    { backgroundColor: color },
+                    isSelected && styles.selectedCircle,
+                  ]}
+                />
+              );
+            })}
+          </View>
+          {/* Time Slots */}
+          <Text style={styles.label}>Time Slots</Text>
+
+          <View style={styles.timeBox}>
+            <Text style={styles.timeText}>Morning</Text>
+            <Text style={styles.clockIcon}>🕒</Text>
+          </View>
+
+          <TouchableOpacity style={styles.addTimeBtn}>
+            <Text style={styles.addIcon}>＋</Text>
+            <Text style={styles.addTimeText}>Add Time</Text>
+          </TouchableOpacity>
+        </ScrollView>
+
+            {/* Footer Buttons */}
+            <View style={styles.footer}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.addBtn}>
+                <Text style={{ color: "#fff" }}>Add Patient</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -81,7 +184,7 @@ const styles = StyleSheet.create({
   addButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#2f80ed",
+    backgroundColor: colors.primaryEnd,
     padding: 12,
     borderRadius: 10,
     alignSelf: "flex-start",
@@ -186,11 +289,119 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#2f80ed",
+    backgroundColor: "#2d79db",
     marginRight: 6,
   },
   footerText: {
     fontSize: 12,
     color: "#666",
   },
+
+  overlay: {
+    flex: 1,
+    backgroundColor: '#EDEDED',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  container: {
+    backgroundColor: '#F7F7F7',
+    borderRadius: 20,
+    padding: 16,
+  },
+
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '600',
+  },
+  close: {
+    fontSize: 20,
+    color: '#666',
+  },
+
+  label: {
+    marginTop: 16,
+    marginBottom: 6,
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+  },
+
+  input: {
+    backgroundColor: '#EFEFEF',
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 14,
+  },
+
+  dropdown: {
+    backgroundColor: '#EFEFEF',
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dropdownText: {
+    fontSize: 14,
+  },
+  dropdownArrow: {
+    fontSize: 16,
+    color: '#666',
+  },
+
+  colorRow: {
+    flexDirection: 'row',
+    marginTop: 8,
+  },
+  colorCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 10,
+  },
+  selectedCircle: {
+    borderWidth: 3,
+    borderColor: '#2F80ED',
+  },
+
+  timeBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#EFEFEF',
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 8,
+    width: 160,
+  },
+  timeText: {
+    fontSize: 16,
+  },
+  clockIcon: {
+    fontSize: 16,
+  },
+
+  addTimeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    backgroundColor: '#EFEFEF',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    alignSelf: 'flex-start',
+  },
+  addIcon: {
+    fontSize: 16,
+    marginRight: 6,
+  },
+  addTimeText: {
+    fontSize: 14,
+  },
+  
 });

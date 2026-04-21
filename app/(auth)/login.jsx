@@ -83,7 +83,7 @@ export default function Login() {
         router.replace("/duprconnect");
       } else {
         
-        router.replace("/home");
+        router.replace("home/dashboard");
       }
     } catch (err) {
       Alert.alert("Login failed", err?.message || "Something went wrong.");

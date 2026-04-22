@@ -15,6 +15,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
+import { useState, useEffect  } from "react";
 
 import { colors } from "../../../constants/colors";
 import { auth } from "../../../services/firebaseConfig";

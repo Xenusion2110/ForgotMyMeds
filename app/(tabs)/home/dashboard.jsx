@@ -1,5 +1,5 @@
 // app/(tabs)/home/index.js
-import { useState } from 'react';
+
 import { 
   StyleSheet, 
   Text, 
@@ -19,9 +19,39 @@ import { signOut } from "firebase/auth";
 import { colors } from "../../../constants/colors";
 import { auth } from "../../../services/firebaseConfig";
 
+import { httpsCallable, getFunctions } from "firebase/functions";
+// import { getTodayAdherence } from "../../../functions";
+const functions = getFunctions();
+
 export default function Home() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+
+  const [medications, setMedications] = useState([]);
+  const [todayAdherence, setTodayAdherence] = useState([]);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try{
+      const getUserMedications = httpsCallable(functions, "getUserMedications");
+      const medsData = await getUserMedications();
+      setMedications(medsData.data || []);
+
+      const getTodayAdherence = httpsCallable(functions, "getTodayAdherence");
+      const adherenceData = await getTodayAdherence();
+      setTodayAdherence(adherenceData.data || []);
+
+      const getUser = httpsCallable(functions, "getUser");
+      const userData = await getUser();
+      setUser(userData.data);
+    } catch (err) {
+      console.error("Dashboard error:", err);
+    }
+  }
 
   const onLogout = async () => {
     try {

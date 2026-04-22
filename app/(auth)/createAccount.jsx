@@ -26,6 +26,9 @@ import { colors } from "../../constants/colors";
 import { auth } from "../../services/firebaseConfig";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
+import { httpsCallable, getFunctions } from "firebase/functions";
+const functions = getFunctions();
+
 export default function CreateAccount() {
   const router = useRouter();
   const scaleCreate = useRef(new Animated.Value(1)).current;
@@ -118,6 +121,9 @@ export default function CreateAccount() {
         cleanEmail,
         password
       );
+      
+      const createUser = httpsCallable(functions, "createUser");
+      await createUser({ displayName: `${cleanFirst} ${cleanLast}`.trim() });
 
       await updateProfile(cred.user, {
         displayName: `${cleanFirst} ${cleanLast}`.trim(),

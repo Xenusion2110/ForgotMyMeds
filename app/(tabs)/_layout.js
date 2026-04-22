@@ -99,7 +99,7 @@ export default function TabsLayout() {
       />
 
       {/* Hide any accidental auto-generated index route */}
-      <Tabs.Screen name="index" options={{ href: null }} />
+      {/* <Tabs.Screen name="index" options={{ href: null }} /> */}
 
     </Tabs>
   );

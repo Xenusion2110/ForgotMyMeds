@@ -90,12 +90,6 @@ export default function Login() {
         router.replace("/(tabs)/home/dashboard");
       }
       
-      if (isFirstTime) {
-        router.replace("/duprconnect");
-      } else {
-        
-        router.replace("home/dashboard");
-      }
     } catch (err) {
       Alert.alert("Login failed", err?.message || "Something went wrong.");
       console.log("Login error:", err);
@@ -123,12 +117,6 @@ export default function Login() {
               </Text>
 
               {/* EMAIL INPUT */}
-              <View
-                style={[
-                  loginStyles.inputWrap,
-                  isEmailFocused && loginStyles.inputWrapFocused,
-                ]}
-              >
                 <TextInput
                   placeholder="Email"
                   placeholderTextColor={colors.textGray}
@@ -143,15 +131,8 @@ export default function Login() {
                   onFocus={() => setIsEmailFocused(true)}
                   onBlur={() => setIsEmailFocused(false)}
                 />
-              </View>
 
               {/* PASSWORD INPUT */}
-              <View
-                style={[
-                  loginStyles.inputWrap,
-                  isPassFocused && loginStyles.inputWrapFocused,
-                ]}
-              >
                 <TextInput
                   placeholder="Password"
                   placeholderTextColor={colors.textGray}
@@ -179,7 +160,6 @@ export default function Login() {
                     color={colors.textGray}
                   />
                 </Pressable>
-              </View>
 
               {/* FORGOT PASSWORD */}
               <Pressable onPress={() => router.push("/forgetpassword")}>
@@ -278,10 +258,16 @@ const loginStyles = {
     elevation: 2,
   },
 
-  input: {
-    fontSize: 18,
-    color: colors.textDark,
-    fontWeight: "600",
+  input: { fontSize: 18, color: colors.textDark, 
+    fontWeight: "600", 
+    borderWidth: 1, 
+    borderRadius: 14, 
+    width: "100%", 
+    height: 72, 
+    borderColor: colors.border, 
+    paddingHorizontal: 20,
+    justifyContent: 20,
+    marginBottom: 14 
   },
 
   eyeButton: {

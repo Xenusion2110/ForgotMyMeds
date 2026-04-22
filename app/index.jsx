@@ -91,11 +91,13 @@ export default function App() {
   //   }
   // };
 
-  const pressIn = (anim) =>
+  const pressIn = (anim) => {
     Animated.spring(anim, { toValue: 0.85, duration: 180, useNativeDriver: true }).start();
+  }
 
-  const pressOut = (anim) =>
+  const pressOut = (anim) => {
     Animated.spring(anim, { toValue: 1, duration: 180, useNativeDriver: true }).start();
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>

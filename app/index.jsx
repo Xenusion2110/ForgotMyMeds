@@ -34,68 +34,70 @@ export default function App() {
   const [takesEvening, setTakesEvening] = useState(false);
   const [notes, setNotes] = useState("");
 
-  useEffect(() => {
-    fetchMedications();
-  }, []);
+  // useEffect(() => {
+  //   fetchMedications();
+  // }, []);
 
-  const fetchMedications = async () => {
-    try {
-      setLoading(true);
-      const getAllMedications = httpsCallable(functions, "getAllMedications");
-      const result = await getAllMedications();
-      setMedications(result.data || []);
-    } catch (err) {
-      console.error("Error fetching meds:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const fetchMedications = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const getAllMedications = httpsCallable(functions, "getAllMedications");
+  //     const result = await getAllMedications();
+  //     setMedications(result.data || []);
+  //   } catch (err) {
+  //     console.error("Error fetching meds:", err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-  const handleAddMedication = async () => {
-    try {
-      setLoading(true);
-      const createMedication = httpsCallable(functions, "createMedication");
-      await createMedication ({
-        name,
-        dose,
-        capsuleQuantity: parseInt(capsuleQuantity),
-        takesMorning,
-        takesAfternoon,
-        takesEvening,
-        notes,
-      });
+  // const handleAddMedication = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const createMedication = httpsCallable(functions, "createMedication");
+  //     await createMedication ({
+  //       name,
+  //       dose,
+  //       capsuleQuantity: parseInt(capsuleQuantity),
+  //       takesMorning,
+  //       takesAfternoon,
+  //       takesEvening,
+  //       notes,
+  //     });
 
-      setName("");
-      setDose("");
-      setCapsuleQuantity("");
-      setTakesMorning(false);
-      setTakesAfternoon(false);
-      setTakesEvening(false);
-      setNotes("");
-      setShowForm(false);
-      fetchMedications();
-    } catch (err){
-      console.error("Error adding meds:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     setName("");
+  //     setDose("");
+  //     setCapsuleQuantity("");
+  //     setTakesMorning(false);
+  //     setTakesAfternoon(false);
+  //     setTakesEvening(false);
+  //     setNotes("");
+  //     setShowForm(false);
+  //     fetchMedications();
+  //   } catch (err){
+  //     console.error("Error adding meds:", err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-  const handleDeleteMedication = async (medicationId) => {
-    try{
-      const deleteMedication = httpsCallable(functions, "deleteMedication");
-      await deleteMedication({ medicationId });
-      fetchMedications();
-    } catch (err) {
-      console.error("Error deleting med:", err);
-    }
-  };
+  // const handleDeleteMedication = async (medicationId) => {
+  //   try{
+  //     const deleteMedication = httpsCallable(functions, "deleteMedication");
+  //     await deleteMedication({ medicationId });
+  //     fetchMedications();
+  //   } catch (err) {
+  //     console.error("Error deleting med:", err);
+  //   }
+  // };
 
-  const pressIn = (anim) =>
+  const pressIn = (anim) => {
     Animated.spring(anim, { toValue: 0.85, duration: 180, useNativeDriver: true }).start();
+  }
 
-  const pressOut = (anim) =>
+  const pressOut = (anim) => {
     Animated.spring(anim, { toValue: 1, duration: 180, useNativeDriver: true }).start();
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>

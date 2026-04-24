@@ -43,13 +43,19 @@ export default function CreateAccount() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  const [focused, setFocused] = useState({
-    first: false,
-    last: false,
-    email: false,
-    pass: false,
-    confirm: false,
-  });
+  // const [focused, setFocused] = useState({
+  //   first: false,
+  //   last: false,
+  //   email: false,
+  //   pass: false,
+  //   confirm: false,
+  // });
+
+  const[isFirstFocused, setIsFirstFocused] = useState(false);
+  const [isLastFocused, setIsLastFocused] = useState(false);
+  const[isEmailFocused, setIsEmailFocused] = useState(false);
+  const[isPassFocused, setIsPassFocused] = useState(false);
+  const[isPassConfFocused, setIsPassConfFocused] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
@@ -121,9 +127,11 @@ export default function CreateAccount() {
         cleanEmail,
         password
       );
+
+      await new Promise(r => setTimeout(r, 1000));
       
       const createUser = httpsCallable(functions, "createUser");
-      await createUser({ displayName: `${cleanFirst} ${cleanLast}`.trim() });
+      await createUser({ displayName: `${cleanFirst} ${cleanLast}`.trim(), uid: cred.user.uid });
 
       await updateProfile(cred.user, {
         displayName: `${cleanFirst} ${cleanLast}`.trim(),
@@ -145,8 +153,14 @@ export default function CreateAccount() {
         ]
       );
     } catch (err) {
-      Alert.alert("Sign Up Failed", friendlyAuthError(err?.code));
-    } finally {
+      console.error("===== FULL ERROR =====");
+      console.error("Error:", err);
+      console.error("Error code:", err?.code);
+      console.error("Error message:", err?.message);
+      console.error("Error details:", JSON.stringify(err, null, 2));
+      Alert.alert("Sign Up Failed", err?.message || err?.code || JSON.stringify(err));
+    }
+     finally {
       setLoading(false);
     }
   };
@@ -170,12 +184,12 @@ export default function CreateAccount() {
                 </Text>
 
                 {/* FIRST NAME */}
-                <View
+                {/* <View
                   style={[
                     createStyles.inputWrap,
-                    focused.first && createStyles.inputWrapFocused,
+                    isFirstFocused && createStyles.inputWrapFocused,
                   ]}
-                >
+                > */}
                   <TextInput
                     placeholder="First Name"
                     placeholderTextColor={colors.textGray}
@@ -186,18 +200,12 @@ export default function CreateAccount() {
                     autoCorrect={false}
                     textContentType="givenName"
                     returnKeyType="next"
-                    onFocus={() => setFocused((p) => ({ ...p, first: true }))}
-                    onBlur={() => setFocused((p) => ({ ...p, first: false }))}
+                    onFocus={() => setIsFirstFocused(true)}
+                    onBlur={() => setIsFirstFocused(false)}
                   />
-                </View>
+                {/* </View> */}
 
                 {/* LAST NAME */}
-                <View
-                  style={[
-                    createStyles.inputWrap,
-                    focused.last && createStyles.inputWrapFocused,
-                  ]}
-                >
                   <TextInput
                     placeholder="Last Name"
                     placeholderTextColor={colors.textGray}
@@ -208,18 +216,11 @@ export default function CreateAccount() {
                     autoCorrect={false}
                     textContentType="familyName"
                     returnKeyType="next"
-                    onFocus={() => setFocused((p) => ({ ...p, last: true }))}
-                    onBlur={() => setFocused((p) => ({ ...p, last: false }))}
+                    onFocus={() => setIsLastFocused(true)}
+                    onBlur={() => setIsLastFocused(false)}
                   />
-                </View>
 
                 {/* EMAIL */}
-                <View
-                  style={[
-                    createStyles.inputWrap,
-                    focused.email && createStyles.inputWrapFocused,
-                  ]}
-                >
                   <TextInput
                     placeholder="Email"
                     placeholderTextColor={colors.textGray}
@@ -231,18 +232,11 @@ export default function CreateAccount() {
                     keyboardType="email-address"
                     textContentType="emailAddress"
                     returnKeyType="next"
-                    onFocus={() => setFocused((p) => ({ ...p, email: true }))}
-                    onBlur={() => setFocused((p) => ({ ...p, email: false }))}
+                    onFocus={() => setIsEmailFocused(true)}
+                    onBlur={() => setIsEmailFocused(false)}
                   />
-                </View>
 
                 {/* PASSWORD */}
-                <View
-                  style={[
-                    createStyles.inputWrap,
-                    focused.pass && createStyles.inputWrapFocused,
-                  ]}
-                >
                   <TextInput
                     placeholder="Password"
                     placeholderTextColor={colors.textGray}
@@ -254,8 +248,8 @@ export default function CreateAccount() {
                     autoCapitalize="none"
                     autoCorrect={false}
                     returnKeyType="next"
-                    onFocus={() => setFocused((p) => ({ ...p, pass: true }))}
-                    onBlur={() => setFocused((p) => ({ ...p, pass: false }))}
+                    onFocus={() => setIsPassFocused(true) }
+                    onBlur={() => setIsPassFocused(false) }
                   />
 
                   <Pressable
@@ -269,16 +263,8 @@ export default function CreateAccount() {
                       color={colors.textGray}
                     />
                   </Pressable>
-                </View>
 
                 {/* CONFIRM PASSWORD */}
-                <View
-                  style={[
-                    createStyles.inputWrap,
-                    focused.confirm && createStyles.inputWrapFocused,
-                    !passwordsMatch && createStyles.inputWrapError,
-                  ]}
-                >
                   <TextInput
                     placeholder="Confirm Password"
                     placeholderTextColor={colors.textGray}
@@ -291,8 +277,8 @@ export default function CreateAccount() {
                     autoCorrect={false}
                     returnKeyType="done"
                     onSubmitEditing={onCreate}
-                    onFocus={() => setFocused((p) => ({ ...p, confirm: true }))}
-                    onBlur={() => setFocused((p) => ({ ...p, confirm: false }))}
+                    onFocus={() => setIsPassConfFocused(true) }
+                    onBlur={() => setIsPassConfFocused(false) }
                   />
 
                   <Pressable
@@ -306,7 +292,6 @@ export default function CreateAccount() {
                       color={colors.textGray}
                     />
                   </Pressable>
-                </View>
 
                 {!passwordsMatch ? (
                   <Text style={createStyles.errorText}>
@@ -388,7 +373,17 @@ const createStyles = {
     elevation: 2,
   },
   inputWrapError: { borderColor: "#EF4444" },
-  input: { fontSize: 18, color: colors.textDark, fontWeight: "600" },
+  input: { fontSize: 18, color: colors.textDark, 
+    fontWeight: "600", 
+    borderWidth: 1, 
+    borderRadius: 14, 
+    width: "100%", 
+    height: 72, 
+    borderColor: colors.border, 
+    paddingHorizontal: 20,
+    justifyContent: 20,
+    marginBottom: 14 
+  },
   eyeButton: {
     position: "absolute",
     right: 14,

@@ -9,10 +9,11 @@ const db = getFirestore();
 
 // Auth
 exports.createUser = functions.https.onCall(async(data, context) => {
-        if(!context.auth) throw new Error('Unauthenticated');
+        // if(!context.auth) throw new Error('Unauthenticated');
 
-        const {displayName } = data;
-        const userId = context.auth.uid;
+        const {displayName, uid } = data;
+
+        const userId = uid;
 
         await db.collection('User').doc(userId).set({
           userId,

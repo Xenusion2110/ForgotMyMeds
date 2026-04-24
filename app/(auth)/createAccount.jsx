@@ -342,24 +342,6 @@ export default function CreateAccount() {
                   </Animated.View>
                 </Pressable>
 
-                {/* ✅ DEV SHORTCUT (OPTIONAL) */}
-                {__DEV__ && (
-                  <Pressable
-                    onPress={() => router.push("/duprconnect")}
-                    style={{ marginTop: 14 }}
-                  >
-                    <Text
-                      style={{
-                        textAlign: "center",
-                        color: "red",
-                        fontWeight: "800",
-                      }}
-                    >
-                      DEV: Skip to DUPR Connect
-                    </Text>
-                  </Pressable>
-                )}
-
                 <View style={styles.divider} />
 
                 <Pressable onPress={() => router.push("/login")}>

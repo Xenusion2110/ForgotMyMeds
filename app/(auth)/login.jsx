@@ -61,7 +61,7 @@ export default function Login() {
     const isFirstTime = String(firstTime) === "1";
 
     if (isFirstTime && auth.currentUser) {
-      router.replace("/duprconnect");
+      router.replace("home/homepage");
       return;
     }
 

@@ -127,9 +127,11 @@ export default function CreateAccount() {
         cleanEmail,
         password
       );
+
+      await new Promise(r => setTimeout(r, 1000));
       
       const createUser = httpsCallable(functions, "createUser");
-      await createUser({ displayName: `${cleanFirst} ${cleanLast}`.trim() });
+      await createUser({ displayName: `${cleanFirst} ${cleanLast}`.trim(), uid: cred.user.uid });
 
       await updateProfile(cred.user, {
         displayName: `${cleanFirst} ${cleanLast}`.trim(),
@@ -151,8 +153,14 @@ export default function CreateAccount() {
         ]
       );
     } catch (err) {
-      Alert.alert("Sign Up Failed", friendlyAuthError(err?.code));
-    } finally {
+      console.error("===== FULL ERROR =====");
+      console.error("Error:", err);
+      console.error("Error code:", err?.code);
+      console.error("Error message:", err?.message);
+      console.error("Error details:", JSON.stringify(err, null, 2));
+      Alert.alert("Sign Up Failed", err?.message || err?.code || JSON.stringify(err));
+    }
+     finally {
       setLoading(false);
     }
   };

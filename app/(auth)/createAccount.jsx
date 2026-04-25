@@ -23,11 +23,9 @@ import styles from "../styles";
 import { colors } from "../../constants/colors";
 
 // ✅ Firebase Auth
-import { auth } from "../../services/firebaseConfig";
+import { auth, callFunction } from "../../services/firebaseConfig";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 
-import { httpsCallable, getFunctions } from "firebase/functions";
-const functions = getFunctions();
 
 export default function CreateAccount() {
   const router = useRouter();
@@ -100,6 +98,7 @@ export default function CreateAccount() {
     const cleanFirst = firstName.trim();
     const cleanLast = lastName.trim();
     const cleanEmail = email.trim().toLowerCase();
+    const fullName = `${cleanFirst} ${cleanLast}`.trim();
 
     if (
       !cleanFirst ||
@@ -128,10 +127,9 @@ export default function CreateAccount() {
         password
       );
 
-      await new Promise(r => setTimeout(r, 1000));
-      
-      const createUser = httpsCallable(functions, "createUser");
-      await createUser({ displayName: `${cleanFirst} ${cleanLast}`.trim(), uid: cred.user.uid });
+      const idToken = await cred.user.getIdToken(true);
+
+      await callFunction("createUser", { displayName: fullName }, { idToken });
 
       await updateProfile(cred.user, {
         displayName: `${cleanFirst} ${cleanLast}`.trim(),

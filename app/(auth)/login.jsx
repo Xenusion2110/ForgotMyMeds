@@ -21,10 +21,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 
 import styles from "../styles";
 import { colors } from "../../constants/colors";
-import { auth } from "../../services/firebaseConfig"; 
-
-import { httpsCallable, getFunctions } from "firebase/functions";
-const functions = getFunctions();
+import { auth, callFunction } from "../../services/firebaseConfig"; 
 
 export default function Login() {
   const router = useRouter();
@@ -58,13 +55,6 @@ export default function Login() {
   const onLogin = async () => {
     Keyboard.dismiss();
 
-    const isFirstTime = String(firstTime) === "1";
-
-    if (isFirstTime && auth.currentUser) {
-      router.replace("home/homepage");
-      return;
-    }
-
     if (!email.trim() || !password) {
       Alert.alert("Missing info", "Please enter your email and password.");
       return;
@@ -79,16 +69,26 @@ export default function Login() {
         password
       );
 
-      const getUser = httpsCallable(functions, "getUser");
-      const userSnapshot = await getUser();
+      const idToken = await userCred.user.getIdToken(true);
+      console.log("Login token ready:", {
+        uid: userCred.user.uid,
+        authCurrentUid: auth.currentUser?.uid,
+        hasToken: Boolean(idToken),
+      });
+
+      let userSnapshot = await callFunction("getUser", {}, { idToken });
+
+      if (!userSnapshot.data) {
+        await callFunction("createUser", {
+          displayName: userCred.user.displayName || "",
+        }, { idToken });
+        userSnapshot = await callFunction("getUser", {}, { idToken });
+      }
 
       console.log("Logged in user:", userCred.user);
+      console.log("Firestore user:", userSnapshot.data);
 
-      if(isFirstTime) {
-        router.replace("duprconnect");
-      } else {
-        router.replace("/(tabs)/home/dashboard");
-      }
+      router.replace("/home/dashboard");
       
     } catch (err) {
       Alert.alert("Login failed", err?.message || "Something went wrong.");
@@ -194,7 +194,7 @@ export default function Login() {
               {/* ✅ DEV SHORTCUT (OPTIONAL) */}
               {__DEV__ && (
                 <Pressable
-                  onPress={() => router.push("home/dashboard")}
+                  onPress={() => router.push("/home/dashboard")}
                   style={{ marginTop: 14 }}
                 >
                   <Text

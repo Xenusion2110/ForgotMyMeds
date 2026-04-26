@@ -83,21 +83,6 @@ export default function TabsLayout() {
         }}
       />
 
-      {/* Caregiver */}
-      <Tabs.Screen
-        name="caregiver/index"
-        options={{
-          tabBarLabel: "Caregiver",
-          tabBarIcon: ({ color, size, focused }) => (
-            <Ionicons
-              name={focused ? "person" : "person-outline"}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-
       {/* Hide any accidental auto-generated index route */}
       {/* <Tabs.Screen name="index" options={{ href: null }} /> */}
 

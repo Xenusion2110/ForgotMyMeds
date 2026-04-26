@@ -18,11 +18,7 @@ import { signOut } from "firebase/auth";
 import { useState, useEffect  } from "react";
 
 import { colors } from "../../../constants/colors";
-import { auth } from "../../../services/firebaseConfig";
-
-import { httpsCallable, getFunctions } from "firebase/functions";
-// import { getTodayAdherence } from "../../../functions";
-const functions = getFunctions();
+import { auth, callFunction } from "../../../services/firebaseConfig";
 
 export default function Home() {
   const router = useRouter();
@@ -38,16 +34,15 @@ export default function Home() {
 
   const fetchDashboardData = async () => {
     try{
-      const getUserMedications = httpsCallable(functions, "getUserMedications");
-      const medsData = await getUserMedications();
+      await auth.currentUser?.getIdToken(true);
+
+      const medsData = await callFunction("getUserMedications", {}, { forceRefresh: true });
       setMedications(medsData.data || []);
 
-      const getTodayAdherence = httpsCallable(functions, "getTodayAdherence");
-      const adherenceData = await getTodayAdherence();
+      const adherenceData = await callFunction("getTodayAdherence");
       setTodayAdherence(adherenceData.data || []);
 
-      const getUser = httpsCallable(functions, "getUser");
-      const userData = await getUser();
+      const userData = await callFunction("getUser");
       setUser(userData.data);
     } catch (err) {
       console.error("Dashboard error:", err);

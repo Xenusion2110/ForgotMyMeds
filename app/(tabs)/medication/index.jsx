@@ -6,13 +6,14 @@ import {
   StyleSheet,
   ScrollView,
   Modal,
+  FlatList,
+  Alert,
 } from "react-native";
 import {useState} from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "../../../constants/colors";
 import { Ionicons } from "@expo/vector-icons";
 
-const COLORS = ['#4A90E2', '#6FCF97', '#9B51E0', '#F2994A', '#EB5757', '#E573A3'];
 
 export default function App() {
   return (
@@ -62,9 +63,117 @@ export default function App() {
   );
 }
 
+
 const AddMedication = ({}) => {
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedColor, setSelectedColor] = useState(COLORS[0]);
+  const [medName, setMedName] = useState("");
+  const [dosage, setDosage] = useState("");
+  const [quantity, setQuantity] = useState(0);
+  const [morning, setMorning] = useState(false);
+  const [afternoon, setAfternoon] = useState(false);
+  const [night, setNight] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const initialData = {
+  Time: [
+    { id: "1", name: "Morning", taken: false },
+    { id: "2", name: "Afternoon", taken: false },
+    { id: "3", name: "Night", taken: false },
+  ],
+};
+
+const TimeChecklist = ({}) => {
+  const [time, setTime] = useState(initialData);
+
+  const toggleTaken = (section, id) => {
+    const updatedSection = time[section].map((item) =>
+      item.id === id ? { ...item, taken: !item.taken } : item
+    );
+
+    setTime({ ...time, [section]: updatedSection });
+
+    if(id = "1"){
+      setMorning(time.Time[0].taken)
+    }
+    if(id = "2"){
+      setAfternoon(time.Time[0].taken)
+    }
+    if(id = "3"){
+      setNight(time.Time[0].taken)
+    }
+  };
+
+  const renderItem = (section) => ({ item }) => (
+      <TouchableOpacity
+        style={[
+          styles2.item,
+          item.taken && styles2.itemTaken
+        ]}
+        onPress={() => toggleTaken(section, item.id)}
+        
+      >
+        <Text style={styles2.text}>
+          {item.taken ? "✅ " : "⬜ "} {item.name}
+        </Text>
+      </TouchableOpacity>
+    );
+  
+    const renderSection = (title) => (
+      <View style={styles2.section}>
+        <Text style={styles2.header}>{title}</Text>
+        <FlatList
+          data={time[title]}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem(title)}
+        />
+      </View>
+    );
+  
+    return (
+      <View style={styles2.container}>
+        {renderSection("Time")}
+      </View>
+    );
+  }
+
+
+  const onCreate = async () => {
+
+    if (loading) return;
+
+        if (
+          !medName ||
+          !dosage ||
+          !quantity ||
+          !(morning||afternoon||night)
+        ) {
+          Alert.alert("Missing Info", "Please fill out all fields.");
+          return;
+        }
+    
+        setLoading(true);
+        try {
+    
+          const idToken = await cred.user.getIdToken(true);
+    
+          await callFunction("createMedication", { name: medName, dose: dosage, capsuleQuantity: quantity, takesMorning: morning, takesAfternoon: afternoon, takesEvening: night }, { idToken });
+    
+          Alert.alert(
+            "Medicine Added"
+          );
+
+        } catch (err) {
+          console.error("===== FULL ERROR =====");
+          console.error("Error:", err);
+          console.error("Error code:", err?.code);
+          console.error("Error message:", err?.message);
+          console.error("Error details:", JSON.stringify(err, null, 2));
+          Alert.alert("Sign Up Failed", err?.message || err?.code || JSON.stringify(err));
+        }
+         finally {
+          setLoading(false);
+        }
+}
 
   return (
     <View>
@@ -89,12 +198,13 @@ const AddMedication = ({}) => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
           {/* Medication Name */}
           <Text style={styles.label}>Medication Name *</Text>
           <TextInput
             placeholder="e.g. Aspirin"
             placeholderTextColor="#999"
+            value={medName}
+            onChangeText={setMedName}
             style={styles.input}
           />
 
@@ -103,59 +213,38 @@ const AddMedication = ({}) => {
           <TextInput
             placeholder="e.g. 500mg"
             placeholderTextColor="#999"
+            value={dosage}
+            onChangeText={setDosage}
             style={styles.input}
           />
 
-          {/* Frequency */}
-          <Text style={styles.label}>Frequency *</Text>
-          <TouchableOpacity style={styles.dropdown}>
-            <Text style={styles.dropdownText}>Once daily</Text>
-            <Text style={styles.dropdownArrow}>⌄</Text>
-          </TouchableOpacity>
+          {/* Quantity per Bottle */}
+          <Text style={styles.label}>Medicine Bottle Quantity *</Text>
+          <TextInput
+            placeholder="e.g. 100"
+            placeholderTextColor="#999"
+            value={quantity}
+            onChangeText={setQuantity}
+            style={styles.input}
+          />
 
-          {/* Color Tag */}
-          <Text style={styles.label}>Color Tag</Text>
-          <View style={styles.colorRow}>
-            {COLORS.map((color) => {
-              const isSelected = color === selectedColor;
-              return (
-                <TouchableOpacity
-                  key={color}
-                  onPress={() => setSelectedColor(color)}
-                  style={[
-                    styles.colorCircle,
-                    { backgroundColor: color },
-                    isSelected && styles.selectedCircle,
-                  ]}
-                />
-              );
-            })}
-          </View>
           {/* Time Slots */}
-          <Text style={styles.label}>Time Slots</Text>
-
-          <View style={styles.timeBox}>
-            <Text style={styles.timeText}>Morning</Text>
-            <Text style={styles.clockIcon}>🕒</Text>
-          </View>
-
-          <TouchableOpacity style={styles.addTimeBtn}>
-            <Text style={styles.addIcon}>＋</Text>
-            <Text style={styles.addTimeText}>Add Time</Text>
-          </TouchableOpacity>
-        </ScrollView>
+          <TimeChecklist/>
 
             {/* Footer Buttons */}
             <View style={styles.footer}>
+
+              <TouchableOpacity 
+              style={styles.addBtn}
+              onPress={() => onCreate()}>
+                <Text style={{ color: "#ffffff" }}>Add Patient</Text>
+              </TouchableOpacity>
+
               <TouchableOpacity
                 style={styles.cancelBtn}
                 onPress={() => setModalVisible(false)}
               >
                 <Text>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.addBtn}>
-                <Text style={{ color: "#fff" }}>Add Patient</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -403,5 +492,46 @@ const styles = StyleSheet.create({
   addTimeText: {
     fontSize: 14,
   },
+
+  cancelBtn: {
+    padding: 10,
+    marginRight: 10,
+    backgroundColor: "#eee",
+    borderRadius: 8,
+  },
+  addBtn: {
+    padding: 10,
+    backgroundColor: colors.primaryEnd,
+    borderRadius: 8,
+  },
   
 });
+
+const styles2 = StyleSheet.create({
+  container: {
+    padding: 10,
+    backgroundColor: "#f5f5f5",
+  },
+  section: {
+    marginBottom: 25,
+  },
+  header: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+  item: {
+    padding: 15,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    marginBottom: 10,
+    elevation: 2,
+  },
+  itemTaken: {
+    backgroundColor: "#d4edda",
+  },
+  text: {
+    fontSize: 16,
+  },
+});
+

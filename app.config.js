@@ -19,7 +19,10 @@ export default{
       "backgroundColor": "#FFF8EB"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "icon": "./assets/img/icon.png",
+      "bundleIdentifier": "com.csm.forgotmymeds",
+      "googleServicesFile": "./services/GoogleService-Info.plist"
     },
     "android": {
     "package": "com.csm.forgotmymeds",
@@ -37,7 +40,9 @@ export default{
     },
     "plugins": [
       "expo-router",
-      "@react-native-firebase/app"
+      "expo-notifications",
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging"
     ]
   }
 }

@@ -19,13 +19,15 @@
       "backgroundColor": "#FFF8EB"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.csm.forgotmymeds",
+      "googleServicesFile": "./services/GoogleService-Info.plist"
     },
     "android": {
       "package": "com.csm.forgotmymeds",
       "googleServicesFile": "./services/google-services.json",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/img/adaptive-icon.png",
+        "foregroundImage": "./assets/img/logo.jpg",
         "backgroundColor": "#FFF8EB",
         "package": "com.csm.forgotmymeds",
         "googleServicesFile": "./services/google-services.json"

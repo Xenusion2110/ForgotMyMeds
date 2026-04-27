@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Platform,
@@ -18,48 +18,12 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
 import { colors } from "../../../constants/colors";
 import { auth, callFunction } from "../../../services/firebaseConfig";
-
-//Notification Imports
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
-import Constants from 'expo-constants';
-
-
-//Notifications
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowList: true,
-  }),
-});
-
-async function registerForPushNotifications() {
-  if (!Device.isDevice) {
-    alert('Must use a physical device for push notifications');
-    return;
-  }
-
-  // Android: create notification channel
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-    });
-  }
-
-  // Request permission
-  const { status } = await Notifications.requestPermissionsAsync();
-  if (status !== 'granted') return;
-
-  // Get Expo Push Token
-  const projectId = Constants.expoConfig.extra.eas.projectId;
-  const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
-  console.log('Push token:', token);
-  return token; // Send this to your backend
-}
+import {
+  syncDoseReminderNotifications,
+  setupFriendMessaging,
+  teardownFriendMessaging,
+  unregisterFriendMessagingToken,
+} from "../../../services/notifications";
 
 const DASH_COLORS = {
   surface: "#FFFFFF",
@@ -159,15 +123,7 @@ const SummaryStat = ({ label, value, color }) => (
   </View>
 );
 
-const PersonCard = ({
-  title,
-  subtitle,
-  records = [],
-  badge,
-  actionLabel,
-  onAction,
-  actionDisabled = false,
-}) => {
+const PersonCard = ({ title, subtitle, records = [], badge, actions = [] }) => {
   const summary = getAdherenceSummary(records);
   const adherenceColor = getAdherenceTone(summary.adherencePercent);
 
@@ -206,20 +162,33 @@ const PersonCard = ({
         />
       </View>
 
-      {actionLabel ? (
-        <TouchableOpacity
-          style={[
-            styles.cardAction,
-            actionDisabled && styles.cardActionDisabled,
-          ]}
-          onPress={onAction}
-          activeOpacity={0.85}
-          disabled={actionDisabled}
-        >
-          <Text style={styles.cardActionText}>
-            {actionDisabled ? "Saving..." : actionLabel}
-          </Text>
-        </TouchableOpacity>
+      {actions.length ? (
+        <View style={styles.cardActions}>
+          {actions.map((action, index) => (
+            <TouchableOpacity
+              key={`${action.label}-${index}`}
+              style={[
+                styles.cardAction,
+                action.tone === "secondary" && styles.cardActionSecondary,
+                action.disabled && styles.cardActionDisabled,
+              ]}
+              onPress={action.onPress}
+              activeOpacity={0.85}
+              disabled={action.disabled}
+            >
+              <Text
+                style={[
+                  styles.cardActionText,
+                  action.tone === "secondary" && styles.cardActionTextSecondary,
+                ]}
+              >
+                {action.disabled && action.loadingLabel
+                  ? action.loadingLabel
+                  : action.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       ) : null}
 
       {records.length ? (
@@ -236,8 +205,6 @@ const PersonCard = ({
 export default function Dashboard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const notificationListener = useRef();
-  const responseListener = useRef();
 
   const [loading, setLoading] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
@@ -249,29 +216,6 @@ export default function Dashboard() {
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [addingFriend, setAddingFriend] = useState(false);
   const [updatingFriendshipId, setUpdatingFriendshipId] = useState("");
-
-  
-  useEffect(() => {
-    registerForPushNotifications();
-
-    // Fires when a notification is received while app is open
-    notificationListener.current =
-      Notifications.addNotificationReceivedListener(notification => {
-        console.log('Received:', notification);
-      });
-
-    // Fires when the user taps a notification
-    responseListener.current =
-      Notifications.addNotificationResponseReceivedListener(response => {
-        console.log('Tapped:', response);
-        // Navigate to relevant screen here
-      });
-
-    return () => {
-      notificationListener.current?.remove();
-      responseListener.current?.remove();
-    };
-  }, []);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -286,12 +230,20 @@ export default function Dashboard() {
           callFunction("getUserFriendships", { date: today }),
         ]);
 
+      const medicationList = medicationsResponse.data || [];
+      const adherenceList = adherenceResponse.data || [];
+
       setUserProfile(userResponse.data || null);
-      setMedications(medicationsResponse.data || []);
-      setTodayAdherence(adherenceResponse.data || []);
+      setMedications(medicationList);
+      setTodayAdherence(adherenceList);
       setFriendships(
         (friendshipsResponse.data || []).filter((entry) => entry?.friend)
       );
+
+      await syncDoseReminderNotifications({
+        medications: medicationList,
+        adherenceRecords: adherenceList,
+      });
     } catch (err) {
       console.error("Dashboard error:", err);
     } finally {
@@ -305,8 +257,19 @@ export default function Dashboard() {
     }, [loadDashboard])
   );
 
+  useEffect(() => {
+    setupFriendMessaging().catch((err) => {
+      console.log("Friend messaging setup error:", err?.message || err);
+    });
+
+    return () => {
+      teardownFriendMessaging();
+    };
+  }, []);
+
   const onLogout = async () => {
     try {
+      await unregisterFriendMessagingToken();
       await signOut(auth);
       router.replace("/");
     } catch (err) {
@@ -389,7 +352,6 @@ export default function Dashboard() {
     userProfile?.displayName || auth.currentUser?.displayName || "Your account";
   const userSubtitle = userProfile?.email || auth.currentUser?.email || "";
   const currentUserId = userProfile?.userId || auth.currentUser?.uid || "";
-
   const summary = getAdherenceSummary(todayAdherence);
 
   return (
@@ -426,10 +388,7 @@ export default function Dashboard() {
             value={summary.totalRecords ? String(summary.takenCount) : ""}
             color={summary.totalRecords ? DASH_COLORS.success : undefined}
           />
-          <SummaryStat
-            label="Friends"
-            value={String(friendships.length)}
-          />
+          <SummaryStat label="Friends" value={String(friendships.length)} />
         </View>
 
         <View style={styles.sectionHeader}>
@@ -468,7 +427,11 @@ export default function Dashboard() {
               Enter your friend's email or account ID.
             </Text>
             <View style={styles.searchBox}>
-              <Ionicons name="person-add-outline" size={18} color={DASH_COLORS.muted} />
+              <Ionicons
+                name="person-add-outline"
+                size={18}
+                color={DASH_COLORS.muted}
+              />
               <TextInput
                 placeholder="friend@email.com or account ID"
                 placeholderTextColor={DASH_COLORS.muted}
@@ -509,8 +472,35 @@ export default function Dashboard() {
         {filteredFriendships.length ? (
           filteredFriendships.map((entry) => {
             const canAccept =
-              entry.status === "pending" &&
-              entry.recipientId === currentUserId;
+              entry.status === "pending" && entry.recipientId === currentUserId;
+            const canMessage =
+              entry.status === "accepted" && Boolean(entry.friend?.id);
+            const actions = [];
+
+            if (canAccept) {
+              actions.push({
+                label: "Accept Invitation",
+                loadingLabel: "Saving...",
+                onPress: () => onAcceptInvitation(entry.id),
+                disabled: updatingFriendshipId === entry.id,
+              });
+            }
+
+            if (canMessage) {
+              actions.push({
+                label: "Messages",
+                onPress: () =>
+                  router.push({
+                    pathname: "/messages/[friendId]",
+                    params: {
+                      friendId: entry.friend.id,
+                      friendName: entry.friend.displayName || "",
+                      friendEmail: entry.friend.email || "",
+                    },
+                  }),
+                tone: "secondary",
+              });
+            }
 
             return (
               <PersonCard
@@ -519,11 +509,7 @@ export default function Dashboard() {
                 subtitle={entry.friend?.email || ""}
                 records={entry.adherence?.records || []}
                 badge={getFriendshipStatusLabel(entry.status)}
-                actionLabel={canAccept ? "Accept Invitation" : ""}
-                onAction={
-                  canAccept ? () => onAcceptInvitation(entry.id) : undefined
-                }
-                actionDisabled={updatingFriendshipId === entry.id}
+                actions={actions}
               />
             );
           })
@@ -690,6 +676,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 8,
   },
+  cardActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
   cardAction: {
     minHeight: 42,
     borderRadius: 12,
@@ -699,6 +690,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 14,
+    flexGrow: 1,
+  },
+  cardActionSecondary: {
+    backgroundColor: DASH_COLORS.surface,
+    borderColor: DASH_COLORS.border,
   },
   cardActionDisabled: {
     opacity: 0.65,
@@ -707,6 +703,9 @@ const styles = StyleSheet.create({
     color: colors.white,
     fontSize: 14,
     fontWeight: "800",
+  },
+  cardActionTextSecondary: {
+    color: DASH_COLORS.text,
   },
   recordsWrap: {
     gap: 10,

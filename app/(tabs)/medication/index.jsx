@@ -14,6 +14,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { colors } from "../../../constants/colors";
 import { callFunction } from "../../../services/firebaseConfig";
 import { LinearGradient } from "expo-linear-gradient";
+import { syncDoseReminderNotifications } from "../../../services/notifications";
 
 const DOSAGE_UNITS = ["mg", "mcg", "g", "ml", "IU", "%", "other"];
 const SCHEDULES = [
@@ -142,7 +143,9 @@ export default function MedicationScreen() {
 
     try {
       const response = await callFunction("getAllMedications", {}, { forceRefresh: true });
-      setMedications(response.data || []);
+      const medicationList = response.data || [];
+      setMedications(medicationList);
+      await syncDoseReminderNotifications({ medications: medicationList });
     } catch (err) {
       console.error("Medication load error:", err);
     } finally {

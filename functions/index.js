@@ -3,6 +3,7 @@ const { onCall, HttpsError } = require('firebase-functions/v2/https');
 const { initializeApp } = require('firebase-admin/app');
 const { getAuth } = require('firebase-admin/auth');
 const { getFirestore } = require('firebase-admin/firestore');
+const { getMessaging } = require('firebase-admin/messaging');
 
 initializeApp();
 const db = getFirestore();
@@ -129,6 +130,154 @@ const serializeFriendshipSnapshot = (doc, friendUser, adherenceRecords) => {
     };
 };
 
+const serializeMessageSnapshot = (doc, userMap = new Map()) => {
+    const data = doc.data() || {};
+    const senderId = data.sender?.id || null;
+    const recipientId = data.recipient?.id || null;
+
+    return {
+        id: doc.id,
+        senderId,
+        recipientId,
+        sender: senderId ? userMap.get(senderId) || null : null,
+        recipient: recipientId ? userMap.get(recipientId) || null : null,
+        text: data.text || '',
+        createdAt: timestampToIso(data.createdAt),
+        readAt: timestampToIso(data.readAt),
+    };
+};
+
+const getMessagingTokenDocId = (token) => encodeURIComponent(token);
+
+const getUserMapForIds = async (userIds) => {
+    const uniqueIds = [...new Set(userIds.filter(Boolean))];
+
+    if (!uniqueIds.length) {
+        return new Map();
+    }
+
+    const userDocs = await Promise.all(
+        uniqueIds.map((userId) => db.collection('User').doc(userId).get())
+    );
+
+    return new Map(
+        userDocs
+            .filter((doc) => doc.exists)
+            .map((doc) => [doc.id, serializeUserSnapshot(doc)])
+    );
+};
+
+const isAcceptedFriendshipBetweenUsers = async (uid, friendId) => {
+    if (!uid || !friendId || uid === friendId) {
+        return false;
+    }
+
+    const outgoingSnapshot = await db.collection('Friendship')
+        .where('requestor', '==', userRef(uid))
+        .get();
+    const hasOutgoingAcceptedFriendship = outgoingSnapshot.docs.some((doc) => {
+        const data = doc.data() || {};
+        return data.recipient?.id === friendId && data.status === 'accepted';
+    });
+
+    if (hasOutgoingAcceptedFriendship) {
+        return true;
+    }
+
+    const incomingSnapshot = await db.collection('Friendship')
+        .where('requestor', '==', userRef(friendId))
+        .get();
+
+    return incomingSnapshot.docs.some((doc) => {
+        const data = doc.data() || {};
+        return data.recipient?.id === uid && data.status === 'accepted';
+    });
+};
+
+const getConversationDocsForUsers = async (uid, friendId) => {
+    const outgoingSnapshot = await db.collection('FriendMessage')
+        .where('sender', '==', userRef(uid))
+        .get();
+    const incomingSnapshot = await db.collection('FriendMessage')
+        .where('sender', '==', userRef(friendId))
+        .get();
+
+    const outgoingDocs = outgoingSnapshot.docs.filter(
+        (doc) => doc.data()?.recipient?.id === friendId
+    );
+    const incomingDocs = incomingSnapshot.docs.filter(
+        (doc) => doc.data()?.recipient?.id === uid
+    );
+
+    return [...outgoingDocs, ...incomingDocs].sort((left, right) => {
+        const leftTime = left.data()?.createdAt?.toMillis
+            ? left.data().createdAt.toMillis()
+            : 0;
+        const rightTime = right.data()?.createdAt?.toMillis
+            ? right.data().createdAt.toMillis()
+            : 0;
+
+        return leftTime - rightTime;
+    });
+};
+
+const sendFriendMessagePush = async (recipientId, senderId, senderLabel, text) => {
+    const tokenSnapshot = await db.collection('MessagingToken')
+        .where('user', '==', userRef(recipientId))
+        .get();
+    const tokenDocs = tokenSnapshot.docs.filter((doc) => doc.data()?.token);
+
+    if (!tokenDocs.length) {
+        return;
+    }
+
+    const tokens = tokenDocs.map((doc) => doc.data().token);
+    const notificationBody = text.length > 140 ? `${text.slice(0, 137)}...` : text;
+    const response = await getMessaging().sendEachForMulticast({
+        tokens,
+        notification: {
+            title: senderLabel,
+            body: notificationBody,
+        },
+        data: {
+            type: 'friend-message',
+            senderId,
+            friendUserId: senderId,
+            title: senderLabel,
+            body: notificationBody,
+        },
+        android: {
+            priority: 'high',
+            notification: {
+                channelId: 'friend-messages',
+            },
+        },
+        apns: {
+            payload: {
+                aps: {
+                    sound: 'default',
+                },
+            },
+        },
+    });
+
+    const invalidTokenDocIds = tokenDocs
+        .filter((doc, index) => {
+            const errorCode = response.responses[index]?.error?.code || '';
+            return (
+                errorCode === 'messaging/registration-token-not-registered' ||
+                errorCode === 'messaging/invalid-registration-token'
+            );
+        })
+        .map((doc) => doc.id);
+
+    await Promise.all(
+        invalidTokenDocIds.map((docId) =>
+            db.collection('MessagingToken').doc(docId).delete()
+        )
+    );
+};
+
 const getMedicationDocsForUser = async (uid) => {
     const snapshot = await db.collection('Medication')
         .where('user', '==', userRef(uid))
@@ -208,6 +357,41 @@ exports.getUser = onCall(callableOptions, async (request) => {
 
     const doc = await db.collection('User').doc(uid).get();
     return doc.exists ? serializeUserSnapshot(doc) : null;
+});
+
+exports.registerMessagingToken = onCall(callableOptions, async (request) => {
+    const { uid } = await requireAuth(request);
+    const token = request.data?.token?.trim();
+    const platform = request.data?.platform || 'unknown';
+
+    if (!token) {
+        throw new HttpsError('invalid-argument', 'A messaging token is required.');
+    }
+
+    await db.collection('MessagingToken').doc(getMessagingTokenDocId(token)).set(
+        {
+            token,
+            platform,
+            user: userRef(uid),
+            updatedAt: admin.firestore.Timestamp.now(),
+        },
+        { merge: true }
+    );
+
+    return { success: true };
+});
+
+exports.unregisterMessagingToken = onCall(callableOptions, async (request) => {
+    await requireAuth(request);
+    const token = request.data?.token?.trim();
+
+    if (!token) {
+        throw new HttpsError('invalid-argument', 'A messaging token is required.');
+    }
+
+    await db.collection('MessagingToken').doc(getMessagingTokenDocId(token)).delete();
+
+    return { success: true };
 });
 
 // Dashboard
@@ -433,4 +617,83 @@ exports.getUserFriendships = onCall(callableOptions, async (request) => {
 
         return serializeFriendshipSnapshot(doc, friendUser, adherenceRecords);
     });
+});
+
+exports.getFriendMessages = onCall(callableOptions, async (request) => {
+    const { uid } = await requireAuth(request);
+    const friendUserId = request.data?.friendUserId?.trim();
+
+    if (!friendUserId) {
+        throw new HttpsError('invalid-argument', 'A friend user ID is required.');
+    }
+
+    const hasAcceptedFriendship = await isAcceptedFriendshipBetweenUsers(uid, friendUserId);
+    if (!hasAcceptedFriendship) {
+        throw new HttpsError('permission-denied', 'You can only message accepted friends.');
+    }
+
+    const conversationDocs = await getConversationDocsForUsers(uid, friendUserId);
+    const unreadDocs = conversationDocs.filter((doc) => {
+        const data = doc.data() || {};
+        return data.recipient?.id === uid && !data.readAt;
+    });
+
+    await Promise.all(
+        unreadDocs.map((doc) =>
+            doc.ref.update({ readAt: admin.firestore.Timestamp.now() })
+        )
+    );
+
+    const userMap = await getUserMapForIds([uid, friendUserId]);
+
+    return conversationDocs
+        .slice(-50)
+        .map((doc) => serializeMessageSnapshot(doc, userMap));
+});
+
+exports.sendFriendMessage = onCall(callableOptions, async (request) => {
+    const { uid } = await requireAuth(request);
+    const recipientId = request.data?.recipientId?.trim();
+    const text = request.data?.text?.trim();
+
+    if (!recipientId) {
+        throw new HttpsError('invalid-argument', 'A recipient is required.');
+    }
+
+    if (!text) {
+        throw new HttpsError('invalid-argument', 'A message is required.');
+    }
+
+    if (text.length > 1000) {
+        throw new HttpsError('invalid-argument', 'Messages must be 1000 characters or fewer.');
+    }
+
+    const hasAcceptedFriendship = await isAcceptedFriendshipBetweenUsers(uid, recipientId);
+    if (!hasAcceptedFriendship) {
+        throw new HttpsError('permission-denied', 'You can only message accepted friends.');
+    }
+
+    const docRef = await db.collection('FriendMessage').add({
+        sender: userRef(uid),
+        recipient: userRef(recipientId),
+        text,
+        createdAt: admin.firestore.Timestamp.now(),
+        readAt: null,
+    });
+
+    const userMap = await getUserMapForIds([uid, recipientId]);
+    const sender = userMap.get(uid);
+    const senderLabel =
+        sender?.displayName ||
+        sender?.email ||
+        'ForgotMyMeds friend';
+
+    try {
+        await sendFriendMessagePush(recipientId, uid, senderLabel, text);
+    } catch (err) {
+        console.error('Friend message push error:', err?.message || err);
+    }
+
+    const savedDoc = await docRef.get();
+    return serializeMessageSnapshot(savedDoc, userMap);
 });

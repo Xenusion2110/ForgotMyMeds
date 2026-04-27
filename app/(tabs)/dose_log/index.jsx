@@ -14,6 +14,7 @@ import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { colors } from "../../../constants/colors";
 import { callFunction } from "../../../services/firebaseConfig";
 import { LinearGradient } from "expo-linear-gradient";
+import { syncDoseReminderNotifications } from "../../../services/notifications";
 
 const TIMESLOTS = [
   { key: "takesMorning", label: "Morning" },
@@ -262,6 +263,10 @@ export default function DoseLogScreen() {
           ? current
           : medicationList[0]?.id || ""
       );
+      await syncDoseReminderNotifications({
+        medications: medicationList,
+        adherenceRecords: adherenceList.filter((record) => record.date === today()),
+      });
     } catch (err) {
       console.error("Dose log load error:", err);
       Alert.alert("Dose Log", err?.message || "We couldn't load your dose log yet.");

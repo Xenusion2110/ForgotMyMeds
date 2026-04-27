@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "../../../constants/colors";
 import { callFunction } from "../../../services/firebaseConfig";
 import { LinearGradient } from "expo-linear-gradient";
@@ -119,6 +120,7 @@ const MedicationCard = ({ item, onDelete, deleting }) => (
 );
 
 export default function MedicationScreen() {
+  const insets = useSafeAreaInsets();
   const [name, setName] = useState("");
   const [dosageAmount, setDosageAmount] = useState("");
   const [dosageUnit, setDosageUnit] = useState("mg");
@@ -247,26 +249,26 @@ export default function MedicationScreen() {
     : medications;
 
   return (
-    <LinearGradient 
-    colors={[colors.primaryStart,colors.primaryEnd]}
-    style={{flex: 1}} 
-    >
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={styles.content}
-      keyboardShouldPersistTaps="handled"
-      refreshControl={
-        <RefreshControl refreshing={loading} onRefresh={loadMedications} />
-      }
-    >
-
-      <View style={styles.header}>
-        <Text style={styles.headerEyebrow}>MEDICATION TRACKER</Text>
+    <SafeAreaView style={styles.safe} edges={["left", "right"]}>
+      <LinearGradient
+        colors={[colors.primaryStart, colors.primaryEnd]}
+        style={[styles.headerGradient, { paddingTop: insets.top + 12 }]}
+      >
+        <Text style={styles.headerEyebrow}>FORGOTMYMEDS</Text>
         <Text style={styles.headerTitle}>Medications</Text>
         <Text style={styles.headerSub}>
-          Add medications to Firebase and keep the list synced across the app.
+          Keep your medication list organized and easy to update.
         </Text>
-      </View>
+      </LinearGradient>
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={loadMedications} />
+        }
+      >
 
       <View style={styles.card}>
         <FieldBox>
@@ -413,47 +415,52 @@ export default function MedicationScreen() {
           <View style={styles.emptyState}>
             <Text style={styles.emptyIcon}>Medication list is empty.</Text>
             <Text style={styles.emptySubText}>
-              Added medications will appear here once they are saved to Firebase.
+              Saved medications will appear here.
             </Text>
           </View>
         )}
       </View>
     </ScrollView>
-     </LinearGradient>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  safe: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  headerGradient: {
+    paddingHorizontal: 18,
+    paddingBottom: 18,
+  },
+  scroll: {
     flex: 1,
   },
   content: {
-    padding: 20,
+    padding: 18,
     paddingBottom: 60,
-  },
-  header: {
-    marginBottom: 24,
-    paddingTop: 16,
   },
   headerEyebrow: {
     fontSize: 11,
-    fontWeight: "700",
-    color: COLORS.accent,
-    letterSpacing: 2.5,
+    fontWeight: "800",
+    color: colors.white,
+    letterSpacing: 1.4,
     marginBottom: 6,
-    fontFamily: Platform.OS === "ios" ? "Courier New" : "monospace",
+    opacity: 0.9,
   },
   headerTitle: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: COLORS.text,
-    letterSpacing: -0.5,
-    marginBottom: 6,
+    fontSize: 28,
+    fontWeight: "900",
+    color: colors.white,
+    marginTop: 4,
   },
   headerSub: {
-    fontSize: 14,
-    color: COLORS.textMuted,
+    fontSize: 13,
+    color: colors.white,
     lineHeight: 20,
+    marginTop: 4,
+    opacity: 0.9,
   },
   card: {
     backgroundColor: COLORS.surface,

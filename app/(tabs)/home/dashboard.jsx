@@ -398,12 +398,12 @@ export default function Dashboard() {
           <View style={styles.addFriendCard}>
             <Text style={styles.addFriendTitle}>Send a friend request</Text>
             <Text style={styles.addFriendSub}>
-              Enter your friend's email or their user ID.
+              Enter your friend's email or account ID.
             </Text>
             <View style={styles.searchBox}>
               <Ionicons name="person-add-outline" size={18} color={DASH_COLORS.muted} />
               <TextInput
-                placeholder="friend@email.com or user ID"
+                placeholder="friend@email.com or account ID"
                 placeholderTextColor={DASH_COLORS.muted}
                 style={styles.searchInput}
                 value={friendInput}
@@ -464,7 +464,7 @@ export default function Dashboard() {
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>No friend adherence to show yet.</Text>
             <Text style={styles.emptySub}>
-              Friend cards stay blank until matching records exist in Firebase.
+              Friend cards stay blank until there is activity to show.
             </Text>
           </View>
         )}

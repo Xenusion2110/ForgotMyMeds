@@ -10,6 +10,7 @@ import {
   View,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors } from "../../../constants/colors";
 import { callFunction } from "../../../services/firebaseConfig";
 import { LinearGradient } from "expo-linear-gradient";
@@ -214,6 +215,7 @@ const HistoryCard = ({ item }) => (
 );
 
 export default function DoseLogScreen() {
+  const insets = useSafeAreaInsets();
   const [medications, setMedications] = useState([]);
   const [history, setHistory] = useState([]);
   const [selectedMedicationId, setSelectedMedicationId] = useState("");
@@ -333,7 +335,7 @@ export default function DoseLogScreen() {
       }
 
       await loadDoseData();
-      Alert.alert("Dose Log", "Adherence saved to Firebase.");
+      Alert.alert("Dose Log", "Dose saved.");
     } catch (err) {
       console.error("Dose log save error:", err);
       Alert.alert("Dose Log", err?.message || "We couldn't save this adherence record.");
@@ -343,24 +345,25 @@ export default function DoseLogScreen() {
   };
 
   return (
-    <LinearGradient 
-        colors={[colors.primaryStart,colors.primaryEnd]}
-        style={{flex: 1}} 
-        >
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={styles.content}
-      refreshControl={
-        <RefreshControl refreshing={loading} onRefresh={loadDoseData} tintColor={COLORS.accentDim} />
-      }
-    >
-      <View style={styles.header}>
-        <Text style={styles.headerEyebrow}>MEDICATION TRACKER</Text>
+    <SafeAreaView style={styles.safe} edges={["left", "right"]}>
+      <LinearGradient
+        colors={[colors.primaryStart, colors.primaryEnd]}
+        style={[styles.headerGradient, { paddingTop: insets.top + 12 }]}
+      >
+        <Text style={styles.headerEyebrow}>FORGOTMYMEDS</Text>
         <Text style={styles.headerTitle}>Dose Log</Text>
         <Text style={styles.headerSub}>
-          Save taken and missed doses straight to Firebase and review recent adherence.
+          Record taken and missed doses and review your recent history.
         </Text>
-      </View>
+      </LinearGradient>
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl refreshing={loading} onRefresh={loadDoseData} tintColor={COLORS.accentDim} />
+        }
+      >
 
       <View style={styles.card}>
         <FieldBox>
@@ -374,7 +377,7 @@ export default function DoseLogScreen() {
           ) : (
             <View style={styles.emptyBox}>
               <Text style={styles.emptyBoxText}>
-                No medications in Firebase yet. Add one from the medications tab first.
+                No medications yet. Add one from the medications tab first.
               </Text>
             </View>
           )}
@@ -455,45 +458,52 @@ export default function DoseLogScreen() {
         ) : (
           <View style={styles.historyEmpty}>
             <Text style={styles.historyEmptyText}>
-              No adherence records in Firebase yet.
+              No dose history yet.
             </Text>
           </View>
         )}
       </View>
     </ScrollView>
-    </LinearGradient>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  root: {
+  safe: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  headerGradient: {
+    paddingHorizontal: 18,
+    paddingBottom: 18,
+  },
+  scroll: {
     flex: 1,
   },
   content: {
-    padding: 20,
+    padding: 18,
     paddingBottom: 60,
-  },
-  header: {
-    marginBottom: 24,
-    paddingTop: 16,
   },
   headerEyebrow: {
     fontSize: 11,
-    fontWeight: "700",
-    color: COLORS.accent,
-    letterSpacing: 2.5,
+    fontWeight: "800",
+    color: colors.white,
+    letterSpacing: 1.4,
     marginBottom: 6,
+    opacity: 0.9,
   },
   headerTitle: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: COLORS.text,
-    marginBottom: 6,
+    fontSize: 28,
+    fontWeight: "900",
+    color: colors.white,
+    marginTop: 4,
   },
   headerSub: {
-    fontSize: 14,
-    color: COLORS.textMuted,
+    fontSize: 13,
+    color: colors.white,
     lineHeight: 20,
+    marginTop: 4,
+    opacity: 0.9,
   },
   card: {
     backgroundColor: COLORS.surface,

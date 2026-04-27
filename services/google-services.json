@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "296867118292",
+    "project_id": "forgotmymeds-3693f",
+    "storage_bucket": "forgotmymeds-3693f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:296867118292:android:bdd89235435bb5a04d8f41",
+        "android_client_info": {
+          "package_name": "com.csm.forgotmymeds"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJ38uYbMol9mcPIj3-eTxXH6iw1ucZsds"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

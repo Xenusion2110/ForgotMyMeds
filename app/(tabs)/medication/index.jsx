@@ -34,7 +34,7 @@ const COLORS = {
   danger: "#F85149",
   dangerDim: "rgba(248,81,73,0.15)",
   text: "#000000",
-  textMuted: "#8B949E",
+  textMuted: "#5A5F67",
   textDim: "#484F58",
   white: "#FFFFFF",
 };

@@ -1,5 +1,10 @@
 {
   "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "cac74a95-65dc-4f68-b31f-3854f43aa4f8"
+      }
+    },
     "scheme": "forgotmymeds", 
     "name": "forgotmymeds",
     "slug": "forgotmymeds",
@@ -19,7 +24,9 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/img/adaptive-icon.png",
-        "backgroundColor": "#FFF8EB"
+        "backgroundColor": "#FFF8EB",
+        "package": "com.csm.forgotmymeds",
+        "googleServicesFile": "./services/google-services.json"
       },
       "edgeToEdgeEnabled": true
     },

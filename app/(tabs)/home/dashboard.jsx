@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import {
   Alert,
   Platform,
@@ -18,6 +18,48 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { signOut } from "firebase/auth";
 import { colors } from "../../../constants/colors";
 import { auth, callFunction } from "../../../services/firebaseConfig";
+
+//Notification Imports
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
+import Constants from 'expo-constants';
+
+
+//Notifications
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowBanner: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowList: true,
+  }),
+});
+
+async function registerForPushNotifications() {
+  if (!Device.isDevice) {
+    alert('Must use a physical device for push notifications');
+    return;
+  }
+
+  // Android: create notification channel
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+    });
+  }
+
+  // Request permission
+  const { status } = await Notifications.requestPermissionsAsync();
+  if (status !== 'granted') return;
+
+  // Get Expo Push Token
+  const projectId = Constants.expoConfig.extra.eas.projectId;
+  const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+  console.log('Push token:', token);
+  return token; // Send this to your backend
+}
 
 const DASH_COLORS = {
   surface: "#FFFFFF",
@@ -194,6 +236,8 @@ const PersonCard = ({
 export default function Dashboard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const notificationListener = useRef();
+  const responseListener = useRef();
 
   const [loading, setLoading] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
@@ -205,6 +249,29 @@ export default function Dashboard() {
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [addingFriend, setAddingFriend] = useState(false);
   const [updatingFriendshipId, setUpdatingFriendshipId] = useState("");
+
+  
+  useEffect(() => {
+    registerForPushNotifications();
+
+    // Fires when a notification is received while app is open
+    notificationListener.current =
+      Notifications.addNotificationReceivedListener(notification => {
+        console.log('Received:', notification);
+      });
+
+    // Fires when the user taps a notification
+    responseListener.current =
+      Notifications.addNotificationResponseReceivedListener(response => {
+        console.log('Tapped:', response);
+        // Navigate to relevant screen here
+      });
+
+    return () => {
+      notificationListener.current?.remove();
+      responseListener.current?.remove();
+    };
+  }, []);
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);

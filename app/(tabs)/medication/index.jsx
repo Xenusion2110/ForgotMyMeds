@@ -10,8 +10,9 @@ import {
   View,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
-
+import { colors } from "../../../constants/colors";
 import { callFunction } from "../../../services/firebaseConfig";
+import { LinearGradient } from "expo-linear-gradient";
 
 const DOSAGE_UNITS = ["mg", "mcg", "g", "ml", "IU", "%", "other"];
 const SCHEDULES = [
@@ -246,6 +247,10 @@ export default function MedicationScreen() {
     : medications;
 
   return (
+    <LinearGradient 
+    colors={[colors.primaryStart,colors.primaryEnd]}
+    style={{flex: 1}} 
+    >
     <ScrollView
       style={styles.root}
       contentContainerStyle={styles.content}
@@ -254,6 +259,7 @@ export default function MedicationScreen() {
         <RefreshControl refreshing={loading} onRefresh={loadMedications} />
       }
     >
+
       <View style={styles.header}>
         <Text style={styles.headerEyebrow}>MEDICATION TRACKER</Text>
         <Text style={styles.headerTitle}>Medications</Text>
@@ -413,13 +419,13 @@ export default function MedicationScreen() {
         )}
       </View>
     </ScrollView>
+     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: COLORS.bg,
   },
   content: {
     padding: 20,

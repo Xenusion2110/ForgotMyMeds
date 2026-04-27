@@ -191,24 +191,6 @@ export default function Login() {
                 </Animated.View>
               </Pressable>
 
-              {/* ✅ DEV SHORTCUT (OPTIONAL) */}
-              {__DEV__ && (
-                <Pressable
-                  onPress={() => router.push("/home/dashboard")}
-                  style={{ marginTop: 14 }}
-                >
-                  <Text
-                    style={{
-                      textAlign: "center",
-                      color: "red",
-                      fontWeight: "800",
-                    }}
-                  >
-                    DEV: Skip to Homepage
-                  </Text>
-                </Pressable>
-              )}
-
               {/* DIVIDER */}
               <View style={styles.divider} />
 

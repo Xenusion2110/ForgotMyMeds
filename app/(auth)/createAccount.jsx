@@ -250,18 +250,6 @@ export default function CreateAccount() {
                     onBlur={() => setIsPassFocused(false) }
                   />
 
-                  <Pressable
-                    onPress={() => setShowPassword((v) => !v)}
-                    hitSlop={10}
-                    style={createStyles.eyeButton}
-                  >
-                    <Ionicons
-                      name={showPassword ? "eye-off" : "eye"}
-                      size={20}
-                      color={colors.textGray}
-                    />
-                  </Pressable>
-
                 {/* CONFIRM PASSWORD */}
                   <TextInput
                     placeholder="Confirm Password"
@@ -278,18 +266,6 @@ export default function CreateAccount() {
                     onFocus={() => setIsPassConfFocused(true) }
                     onBlur={() => setIsPassConfFocused(false) }
                   />
-
-                  <Pressable
-                    onPress={() => setShowConfirm((v) => !v)}
-                    hitSlop={10}
-                    style={createStyles.eyeButton}
-                  >
-                    <Ionicons
-                      name={showConfirm ? "eye-off" : "eye"}
-                      size={20}
-                      color={colors.textGray}
-                    />
-                  </Pressable>
 
                 {!passwordsMatch ? (
                   <Text style={createStyles.errorText}>

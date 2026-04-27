@@ -10,8 +10,9 @@ import {
   View,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
-
+import { colors } from "../../../constants/colors";
 import { callFunction } from "../../../services/firebaseConfig";
+import { LinearGradient } from "expo-linear-gradient";
 
 const TIMESLOTS = [
   { key: "takesMorning", label: "Morning" },
@@ -342,6 +343,10 @@ export default function DoseLogScreen() {
   };
 
   return (
+    <LinearGradient 
+        colors={[colors.primaryStart,colors.primaryEnd]}
+        style={{flex: 1}} 
+        >
     <ScrollView
       style={styles.root}
       contentContainerStyle={styles.content}
@@ -456,13 +461,13 @@ export default function DoseLogScreen() {
         )}
       </View>
     </ScrollView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: COLORS.bg,
   },
   content: {
     padding: 20,

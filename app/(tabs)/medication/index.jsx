@@ -1,537 +1,704 @@
+import React, { useState } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ScrollView,
-  Modal,
-  FlatList,
-  Alert,
-} from "react-native";
-import {useState} from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { colors } from "../../../constants/colors";
-import { Ionicons } from "@expo/vector-icons";
+  StyleSheet,
+  Platform,
+} from 'react-native';
 
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-export default function App() {
-  return (
-    <SafeAreaView style={{ flex: 10, backgroundColor: colors.background }}>
-    <View style={styles.container}>
-      {/* Header */}
-      <Text style={styles.title}>Medications</Text>
-      <Text style={styles.subtitle}>Manage all your medications</Text>
+const TIMESLOTS = ['Morning', 'Afternoon', 'Evening', 'Bedtime', 'As Needed'];
 
-      <AddMedication/>
+const DOSAGE_UNITS = ['mg', 'mcg', 'g', 'ml', 'IU', '%', 'other'];
 
-      {/* Search */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={18} color="#888" />
-        <TextInput
-          placeholder="Search medications..."
-          style={styles.searchInput}
-        />
-      </View>
-
-      {/* Medication Card */}
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <View style={styles.iconBox}>
-            <Text style={styles.iconText}>M</Text>
-          </View>
-
-          <View style={{ flex: 1 }}>
-            <Text style={styles.medName}>Medicine</Text>
-            <Text style={styles.medDose}>10mg</Text>
-
-            <View style={styles.row}>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>Once daily</Text>
-              </View>
-
-              <View style={styles.timeRow}>
-                <Ionicons name="time-outline" size={14} color="#666" />
-                <Text style={styles.timeText}>8:00 AM</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-      </View>
-    </View>
-    </SafeAreaView>
-  );
-}
-
-
-const AddMedication = ({}) => {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [medName, setMedName] = useState("");
-  const [dosage, setDosage] = useState("");
-  const [quantity, setQuantity] = useState(0);
-  const [morning, setMorning] = useState(false);
-  const [afternoon, setAfternoon] = useState(false);
-  const [night, setNight] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const initialData = {
-  Time: [
-    { id: "1", name: "Morning", taken: false },
-    { id: "2", name: "Afternoon", taken: false },
-    { id: "3", name: "Night", taken: false },
-  ],
+const COLORS = {
+  bg: '#9bec82',
+  surface: '#ffffff',
+  surfaceAlt: '#e8ebe8',
+  border: '#30363D',
+  accent: '#3FB950',
+  accentDim: '#238636',
+  accentGlow: 'rgba(63,185,80,0.15)',
+  accentBlue: '#58A6FF',
+  accentBlueDim: 'rgba(88,166,255,0.15)',
+  danger: '#F85149',
+  dangerDim: 'rgba(248,81,73,0.15)',
+  text: '#000000',
+  textMuted: '#8B949E',
+  textDim: '#484F58',
+  white: '#FFFFFF',
 };
 
-const TimeChecklist = ({}) => {
-  const [time, setTime] = useState(initialData);
+// ─── Shared Sub-components ────────────────────────────────────────────────────
 
-  const toggleTaken = (section, id) => {
-    const updatedSection = time[section].map((item) =>
-      item.id === id ? { ...item, taken: !item.taken } : item
-    );
+const Label = ({ children }) => (
+  <Text style={styles.label}>{children}</Text>
+);
 
-    setTime({ ...time, [section]: updatedSection });
+const FieldBox = ({ children }) => (
+  <View style={styles.fieldBox}>{children}</View>
+);
 
-    if(id = "1"){
-      setMorning(time.Time[0].taken)
-    }
-    if(id = "2"){
-      setAfternoon(time.Time[0].taken)
-    }
-    if(id = "3"){
-      setNight(time.Time[0].taken)
-    }
-  };
-
-  const renderItem = (section) => ({ item }) => (
+const TimeslotPicker = ({ value, onChange }) => (
+  <View style={styles.timeslotRow}>
+    {TIMESLOTS.map((slot) => (
       <TouchableOpacity
-        style={[
-          styles2.item,
-          item.taken && styles2.itemTaken
-        ]}
-        onPress={() => toggleTaken(section, item.id)}
-        
+        key={slot}
+        style={[styles.timeslotChip, value === slot && styles.timeslotChipActive]}
+        onPress={() => onChange(slot)}
+        activeOpacity={0.7}
       >
-        <Text style={styles2.text}>
-          {item.taken ? "✅ " : "⬜ "} {item.name}
+        <Text style={[styles.timeslotText, value === slot && styles.timeslotTextActive]}>
+          {slot}
         </Text>
       </TouchableOpacity>
-    );
-  
-    const renderSection = (title) => (
-      <View style={styles2.section}>
-        <Text style={styles2.header}>{title}</Text>
-        <FlatList
-          data={time[title]}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem(title)}
-        />
+    ))}
+  </View>
+);
+
+const MetaItem = ({ icon, label, value }) => (
+  <View style={styles.metaItem}>
+    <Text style={styles.metaIcon}>{icon}</Text>
+    <Text style={styles.metaLabel}>{label}: </Text>
+    <Text style={styles.metaValue}>{value}</Text>
+  </View>
+);
+
+// ─── Dosage Unit Picker ───────────────────────────────────────────────────────
+
+const DosageUnitPicker = ({ value, onChange }) => (
+  <View style={styles.unitRow}>
+    {DOSAGE_UNITS.map((unit) => (
+      <TouchableOpacity
+        key={unit}
+        style={[styles.unitChip, value === unit && styles.unitChipActive]}
+        onPress={() => onChange(unit)}
+        activeOpacity={0.7}
+      >
+        <Text style={[styles.unitText, value === unit && styles.unitTextActive]}>
+          {unit}
+        </Text>
+      </TouchableOpacity>
+    ))}
+  </View>
+);
+
+// ─── Medication Card ──────────────────────────────────────────────────────────
+
+const MedicationCard = ({ item, index, onDelete }) => (
+  <View style={[styles.medCard, index === 0 && styles.medCardFirst]}>
+    <View style={styles.medCardHeader}>
+      <View style={styles.medCardTitleRow}>
+        <Text style={styles.medCardName}>{item.name}</Text>
+        <View style={styles.dosagePill}>
+          <Text style={styles.dosagePillText}>
+            {item.dosageAmount}{item.dosageUnit}
+          </Text>
+        </View>
       </View>
-    );
-  
-    return (
-      <View style={styles2.container}>
-        {renderSection("Time")}
-      </View>
-    );
-  }
+      <TouchableOpacity
+        style={styles.deleteBtn}
+        onPress={() => onDelete(item.id)}
+        activeOpacity={0.7}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Text style={styles.deleteBtnText}>✕</Text>
+      </TouchableOpacity>
+    </View>
 
+    <View style={styles.divider} />
 
-  const onCreate = async () => {
+    <View style={styles.medMeta}>
+      <MetaItem icon="💊" label="Dosage" value={`${item.dosageAmount} ${item.dosageUnit}`} />
+      <MetaItem icon="🔢" label="Quantity" value={`${item.quantity} ${item.quantity === '1' ? 'unit' : 'units'}`} />
+      <MetaItem icon="🕐" label="Timeslot" value={item.timeslot} />
+    </View>
+  </View>
+);
 
-    if (loading) return;
+// ─── Main Component ───────────────────────────────────────────────────────────
 
-        if (
-          !medName ||
-          !dosage ||
-          !quantity ||
-          !(morning||afternoon||night)
-        ) {
-          Alert.alert("Missing Info", "Please fill out all fields.");
-          return;
-        }
-    
-        setLoading(true);
-        try {
-    
-          const idToken = await cred.user.getIdToken(true);
-    
-          await callFunction("createMedication", { name: medName, dose: dosage, capsuleQuantity: quantity, takesMorning: morning, takesAfternoon: afternoon, takesEvening: night }, { idToken });
-    
-          Alert.alert(
-            "Medicine Added"
-          );
+export default function AddMedicationList() {
+  const [name, setName] = useState('');
+  const [dosageAmount, setDosageAmount] = useState('');
+  const [dosageUnit, setDosageUnit] = useState('mg');
+  const [quantity, setQuantity] = useState('');
+  const [timeslot, setTimeslot] = useState('Morning');
+  const [medications, setMedications] = useState([]);
+  const [errors, setErrors] = useState({});
+  const [submitted, setSubmitted] = useState(false);
 
-        } catch (err) {
-          console.error("===== FULL ERROR =====");
-          console.error("Error:", err);
-          console.error("Error code:", err?.code);
-          console.error("Error message:", err?.message);
-          console.error("Error details:", JSON.stringify(err, null, 2));
-          Alert.alert("Sign Up Failed", err?.message || err?.code || JSON.stringify(err));
-        }
-         finally {
-          setLoading(false);
-        }
-}
+  const clearError = (key) =>
+    setErrors((prev) => ({ ...prev, [key]: null }));
+
+  const validate = () => {
+    const e = {};
+    if (!name.trim()) e.name = 'Medication name is required.';
+    if (!dosageAmount.trim()) {
+      e.dosageAmount = 'Dosage amount is required.';
+    } else if (isNaN(Number(dosageAmount)) || Number(dosageAmount) <= 0) {
+      e.dosageAmount = 'Enter a valid positive number.';
+    }
+    if (!quantity.trim()) {
+      e.quantity = 'Quantity is required.';
+    } else if (!Number.isInteger(Number(quantity)) || Number(quantity) <= 0) {
+      e.quantity = 'Enter a valid whole number (e.g. 30).';
+    }
+    if (!timeslot) e.timeslot = 'Select a timeslot.';
+    return e;
+  };
+
+  const handleAdd = () => {
+    const e = validate();
+    setErrors(e);
+    if (Object.keys(e).length > 0) return;
+
+    const entry = {
+      id: Date.now().toString(),
+      name: name.trim(),
+      dosageAmount: dosageAmount.trim(),
+      dosageUnit,
+      quantity: quantity.trim(),
+      timeslot,
+    };
+
+    setMedications((prev) => [entry, ...prev]);
+    setSubmitted(true);
+
+    setTimeout(() => {
+      setSubmitted(false);
+      setName('');
+      setDosageAmount('');
+      setDosageUnit('mg');
+      setQuantity('');
+      setTimeslot('Morning');
+      setErrors({});
+    }, 1500);
+  };
+
+  const handleDelete = (id) => {
+    setMedications((prev) => prev.filter((m) => m.id !== id));
+  };
 
   return (
-    <View>
-      {/* Button to open modal */}
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => setModalVisible(true)}
-      >
-        <Ionicons name="add" size={20} color="#fff" />
-        <Text style={styles.addButtonText}>Add Medication</Text>
-      </TouchableOpacity>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerEyebrow}>MEDICATION TRACKER</Text>
+        <Text style={styles.headerTitle}>Add Medication</Text>
+        <Text style={styles.headerSub}>
+          Build your medication list with dosage, quantity, and schedule.
+        </Text>
+      </View>
 
-      {/* Modal */}
-      <Modal visible={modalVisible} transparent animationType="fade">
-        <View style={styles.overlay}>
-          <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-              <Text style={styles.title}>Add Patient</Text>
-              <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Text style={styles.close}>✕</Text>
-              </TouchableOpacity>
-            </View>
+      {/* Form Card */}
+      <View style={styles.card}>
 
-          {/* Medication Name */}
-          <Text style={styles.label}>Medication Name *</Text>
+        {/* Medication Name */}
+        <FieldBox>
+          <Label>Medication Name</Label>
           <TextInput
-            placeholder="e.g. Aspirin"
-            placeholderTextColor="#999"
-            value={medName}
-            onChangeText={setMedName}
-            style={styles.input}
+            style={[styles.input, errors.name && styles.inputError]}
+            value={name}
+            onChangeText={(t) => { setName(t); clearError('name'); }}
+            placeholder="e.g. Metformin"
+            placeholderTextColor={COLORS.textDim}
           />
+          {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+        </FieldBox>
 
-          {/* Dosage */}
-          <Text style={styles.label}>Dosage *</Text>
-          <TextInput
-            placeholder="e.g. 500mg"
-            placeholderTextColor="#999"
-            value={dosage}
-            onChangeText={setDosage}
-            style={styles.input}
-          />
-
-          {/* Quantity per Bottle */}
-          <Text style={styles.label}>Medicine Bottle Quantity *</Text>
-          <TextInput
-            placeholder="e.g. 100"
-            placeholderTextColor="#999"
-            value={quantity}
-            onChangeText={setQuantity}
-            style={styles.input}
-          />
-
-          {/* Time Slots */}
-          <TimeChecklist/>
-
-            {/* Footer Buttons */}
-            <View style={styles.footer}>
-
-              <TouchableOpacity 
-              style={styles.addBtn}
-              onPress={() => onCreate()}>
-                <Text style={{ color: "#ffffff" }}>Add Patient</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.cancelBtn}
-                onPress={() => setModalVisible(false)}
-              >
-                <Text>Cancel</Text>
-              </TouchableOpacity>
+        {/* Dosage */}
+        <FieldBox>
+          <Label>Dosage</Label>
+          <View style={styles.dosageRow}>
+            <TextInput
+              style={[styles.input, styles.dosageInput, errors.dosageAmount && styles.inputError]}
+              value={dosageAmount}
+              onChangeText={(t) => { setDosageAmount(t); clearError('dosageAmount'); }}
+              placeholder="e.g. 500"
+              placeholderTextColor={COLORS.textDim}
+              keyboardType="decimal-pad"
+            />
+            <View style={styles.dosageUnitWrap}>
+              <Text style={styles.dosageUnitSelected}>{dosageUnit}</Text>
             </View>
           </View>
+          {errors.dosageAmount && <Text style={styles.errorText}>{errors.dosageAmount}</Text>}
+          <View style={{ marginTop: 10 }}>
+            <DosageUnitPicker value={dosageUnit} onChange={setDosageUnit} />
+          </View>
+        </FieldBox>
+
+        {/* Quantity */}
+        <FieldBox>
+          <Label>Medicine Quantity</Label>
+          <View style={styles.quantityRow}>
+            <TouchableOpacity
+              style={styles.qtyBtn}
+              onPress={() => {
+                const n = Math.max(1, (parseInt(quantity) || 0) - 1);
+                setQuantity(String(n));
+                clearError('quantity');
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.qtyBtnText}>−</Text>
+            </TouchableOpacity>
+
+            <TextInput
+              style={[styles.input, styles.qtyInput, errors.quantity && styles.inputError]}
+              value={quantity}
+              onChangeText={(t) => { setQuantity(t.replace(/[^0-9]/g, '')); clearError('quantity'); }}
+              placeholder="30"
+              placeholderTextColor={COLORS.textDim}
+              keyboardType="number-pad"
+              textAlign="center"
+            />
+
+            <TouchableOpacity
+              style={styles.qtyBtn}
+              onPress={() => {
+                const n = (parseInt(quantity) || 0) + 1;
+                setQuantity(String(n));
+                clearError('quantity');
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.qtyBtnText}>+</Text>
+            </TouchableOpacity>
+
+            <View style={styles.qtyLabel}>
+              <Text style={styles.qtyLabelText}>units</Text>
+            </View>
+          </View>
+          {errors.quantity && <Text style={styles.errorText}>{errors.quantity}</Text>}
+        </FieldBox>
+
+        {/* Timeslot */}
+        <FieldBox>
+          <Label>Timeslot</Label>
+          <TimeslotPicker
+            value={timeslot}
+            onChange={(v) => { setTimeslot(v); clearError('timeslot'); }}
+          />
+          {errors.timeslot && <Text style={styles.errorText}>{errors.timeslot}</Text>}
+        </FieldBox>
+
+        {/* Submit */}
+        <TouchableOpacity
+          style={[styles.submitBtn, submitted && styles.submitBtnSuccess]}
+          onPress={handleAdd}
+          activeOpacity={0.85}
+          disabled={submitted}
+        >
+          <Text style={styles.submitBtnText}>
+            {submitted ? '✓  Medication Added!' : '+ Add to List'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Medication List */}
+      {medications.length > 0 && (
+        <View style={styles.listSection}>
+          <View style={styles.listHeader}>
+            <Text style={styles.listTitle}>My Medications</Text>
+            <View style={styles.countBadge}>
+              <Text style={styles.countBadgeText}>{medications.length}</Text>
+            </View>
+          </View>
+
+          {medications.map((item, i) => (
+            <MedicationCard
+              key={item.id}
+              item={item}
+              index={i}
+              onDelete={handleDelete}
+            />
+          ))}
         </View>
-      </Modal>
-    </View>
+      )}
+
+      {/* Empty state */}
+      {medications.length === 0 && (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyIcon}>💊</Text>
+          <Text style={styles.emptyText}>No medications added yet.</Text>
+          <Text style={styles.emptySubText}>Fill in the form above to get started.</Text>
+        </View>
+      )}
+    </ScrollView>
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: "#f5f7fb",
+    backgroundColor: COLORS.bg,
+  },
+  content: {
     padding: 20,
+    paddingBottom: 60,
   },
-  title: {
-    fontSize: 26,
-    fontWeight: "700",
-    color: "#111",
+
+  // Header — identical to adherence logger
+  header: {
+    marginBottom: 24,
+    paddingTop: 16,
   },
-  subtitle: {
+  headerEyebrow: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.accent,
+    letterSpacing: 2.5,
+    marginBottom: 6,
+    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: COLORS.text,
+    letterSpacing: -0.5,
+    marginBottom: 6,
+  },
+  headerSub: {
     fontSize: 14,
-    color: "#666",
-    marginBottom: 20,
+    color: COLORS.textMuted,
+    lineHeight: 20,
   },
-  addButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.primaryEnd,
-    padding: 12,
-    borderRadius: 10,
-    alignSelf: "flex-start",
-    marginBottom: 20,
-  },
-  addButtonText: {
-    color: "#fff",
-    marginLeft: 8,
-    fontWeight: "600",
-  },
-  searchContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "#eee",
-  },
-  searchInput: {
-    marginLeft: 8,
-    flex: 1,
-  },
+
+  // Card — identical
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+    backgroundColor: COLORS.surface,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 20,
+    gap: 4,
   },
-  cardHeader: {
-    flexDirection: "row",
+  fieldBox: {
+    marginBottom: 18,
   },
-  iconBox: {
-    width: 50,
-    height: 50,
-    borderRadius: 12,
-    backgroundColor: "#dbeafe",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-  iconText: {
-    color: "#2f80ed",
-    fontWeight: "700",
-    fontSize: 18,
-  },
-  medName: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  medDose: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 6,
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-  badge: {
-    backgroundColor: "#34c759",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginRight: 10,
-  },
-  badgeText: {
-    color: "#fff",
-    fontSize: 12,
-  },
-  timeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  timeText: {
-    marginLeft: 4,
-    fontSize: 12,
-    color: "#666",
-  },
-  note: {
-    fontSize: 12,
-    color: "#888",
-    fontStyle: "italic",
-  },
-  footer: {
-    marginTop: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  activeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#2d79db",
-    marginRight: 6,
-  },
-  footerText: {
-    fontSize: 12,
-    color: "#666",
-  },
-
-  overlay: {
-    flex: 1,
-    backgroundColor: '#EDEDED',
-    justifyContent: 'center',
-    padding: 16,
-  },
-  container: {
-    backgroundColor: '#F7F7F7',
-    borderRadius: 20,
-    padding: 16,
-  },
-
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '600',
-  },
-  close: {
-    fontSize: 20,
-    color: '#666',
-  },
-
   label: {
-    marginTop: 16,
-    marginBottom: 6,
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#333',
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
   },
 
+  // Input — identical
   input: {
-    backgroundColor: '#EFEFEF',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 14,
-  },
-
-  dropdown: {
-    backgroundColor: '#EFEFEF',
-    borderRadius: 12,
-    padding: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dropdownText: {
-    fontSize: 14,
-  },
-  dropdownArrow: {
-    fontSize: 16,
-    color: '#666',
-  },
-
-  colorRow: {
-    flexDirection: 'row',
-    marginTop: 8,
-  },
-  colorCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    marginRight: 10,
-  },
-  selectedCircle: {
-    borderWidth: 3,
-    borderColor: '#2F80ED',
-  },
-
-  timeBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#EFEFEF',
-    borderRadius: 12,
-    padding: 14,
-    marginTop: 8,
-    width: 160,
-  },
-  timeText: {
-    fontSize: 16,
-  },
-  clockIcon: {
-    fontSize: 16,
-  },
-
-  addTimeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-    backgroundColor: '#EFEFEF',
-    borderRadius: 12,
-    paddingVertical: 10,
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 10,
     paddingHorizontal: 14,
-    alignSelf: 'flex-start',
+    paddingVertical: 12,
+    fontSize: 15,
+    color: COLORS.text,
   },
-  addIcon: {
+  inputError: {
+    borderColor: COLORS.danger,
+  },
+  errorText: {
+    fontSize: 12,
+    color: COLORS.danger,
+    marginTop: 5,
+    marginLeft: 2,
+  },
+
+  // Timeslot chips — identical
+  timeslotRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  timeslotChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  timeslotChipActive: {
+    backgroundColor: COLORS.accentGlow,
+    borderColor: COLORS.accent,
+  },
+  timeslotText: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+    fontWeight: '500',
+  },
+  timeslotTextActive: {
+    color: COLORS.accent,
+    fontWeight: '700',
+  },
+
+  // Submit — identical
+  submitBtn: {
+    backgroundColor: COLORS.accentDim,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+  },
+  submitBtnSuccess: {
+    backgroundColor: '#1a4d2e',
+    borderColor: COLORS.accent,
+  },
+  submitBtnText: {
+    color: COLORS.white,
     fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+
+  // Dosage row
+  dosageRow: {
+    flexDirection: 'row',
+    gap: 10,
+    alignItems: 'center',
+  },
+  dosageInput: {
+    flex: 1,
+  },
+  dosageUnitWrap: {
+    backgroundColor: COLORS.accentGlow,
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minWidth: 56,
+    alignItems: 'center',
+  },
+  dosageUnitSelected: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.accent,
+  },
+
+  // Unit chips (blue accent to differ from timeslot)
+  unitRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  unitChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  unitChipActive: {
+    backgroundColor: COLORS.accentBlueDim,
+    borderColor: COLORS.accentBlue,
+  },
+  unitText: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    fontWeight: '500',
+    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
+  },
+  unitTextActive: {
+    color: COLORS.accentBlue,
+    fontWeight: '700',
+  },
+
+  // Quantity stepper
+  quantityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  qtyBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qtyBtnText: {
+    fontSize: 20,
+    color: COLORS.text,
+    lineHeight: 24,
+  },
+  qtyInput: {
+    flex: 1,
+    textAlign: 'center',
+  },
+  qtyLabel: {
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    backgroundColor: COLORS.surfaceAlt,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  qtyLabelText: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
+  },
+
+  // List section
+  listSection: {
+    marginTop: 32,
+  },
+  listHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+    gap: 10,
+  },
+  listTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.text,
+    letterSpacing: 0.2,
+  },
+  countBadge: {
+    backgroundColor: COLORS.accentGlow,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.accent,
+    paddingHorizontal: 9,
+    paddingVertical: 2,
+  },
+  countBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.accent,
+  },
+
+  // Medication Card
+  medCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 16,
+    marginBottom: 12,
+  },
+  medCardFirst: {
+    borderColor: COLORS.accentDim,
+  },
+  medCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  medCardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  medCardName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  dosagePill: {
+    backgroundColor: COLORS.accentBlueDim,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.accentBlue,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  dosagePillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.accentBlue,
+    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
+  },
+  deleteBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: COLORS.dangerDim,
+    borderWidth: 1,
+    borderColor: COLORS.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  deleteBtnText: {
+    fontSize: 12,
+    color: COLORS.danger,
+    fontWeight: '700',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+    marginBottom: 12,
+  },
+  medMeta: {
+    gap: 6,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  metaIcon: {
+    fontSize: 12,
     marginRight: 6,
   },
-  addTimeText: {
-    fontSize: 14,
+  metaLabel: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+  },
+  metaValue: {
+    fontSize: 13,
+    color: COLORS.text,
+    fontWeight: '500',
   },
 
-  cancelBtn: {
-    padding: 10,
-    marginRight: 10,
-    backgroundColor: "#eee",
-    borderRadius: 8,
+  // Empty state
+  emptyState: {
+    marginTop: 40,
+    alignItems: 'center',
+    paddingVertical: 32,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderStyle: 'dashed',
+    borderRadius: 16,
   },
-  addBtn: {
-    padding: 10,
-    backgroundColor: colors.primaryEnd,
-    borderRadius: 8,
+  emptyIcon: {
+    fontSize: 36,
+    marginBottom: 12,
   },
-  
-});
-
-const styles2 = StyleSheet.create({
-  container: {
-    padding: 10,
-    backgroundColor: "#f5f5f5",
+  emptyText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+    marginBottom: 4,
   },
-  section: {
-    marginBottom: 25,
-  },
-  header: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 10,
-  },
-  item: {
-    padding: 15,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    marginBottom: 10,
-    elevation: 2,
-  },
-  itemTaken: {
-    backgroundColor: "#d4edda",
-  },
-  text: {
-    fontSize: 16,
+  emptySubText: {
+    fontSize: 13,
+    color: COLORS.textDim,
   },
 });
-

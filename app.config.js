@@ -26,7 +26,8 @@ export default{
       "adaptiveIcon": {
         "foregroundImage": "./assets/img/adaptive-icon.png",
         "backgroundColor": "#FFF8EB",
-        "package": "com.csm.forgotmymeds"
+        "package": "com.csm.forgotmymeds",
+        "googleServicesFile": "./services/google-services.json"
       },
       "edgeToEdgeEnabled": true
     },

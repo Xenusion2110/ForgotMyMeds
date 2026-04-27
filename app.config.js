@@ -23,6 +23,7 @@ export default{
     },
     "android": {
     "package": "com.csm.forgotmymeds",
+    "googleServicesFile": "./services/google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/img/adaptive-icon.png",
         "backgroundColor": "#FFF8EB",

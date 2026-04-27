@@ -6,6 +6,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+//import messaging from '@react-native-firebase/messaging';
+//import { AppRegistry } from 'react-native';
+
 
 import { httpsCallable, getFunctions } from "firebase/functions";
 import { auth } from "../services/firebaseConfig";
@@ -16,12 +19,18 @@ import { colors } from "../constants/colors";
 
 import Logo from "../assets/img/Logo.jpg";
 
+// messaging().setBackgroundMessageHandler(async remoteMessage => {
+//   console.log('Background message:', remoteMessage);
+//   //Handle data-only or silent notifications here
+// });
+
+//AppRegistry.registerComponent('main', () => App);
+
 export default function App() {
   const router = useRouter();
 
   const scaleCreate = useRef(new Animated.Value(1)).current;
   const scaleLogin = useRef(new Animated.Value(1)).current;
-
 
   const [medications, setMedications] = useState([]);
   const [loading, setLoading] = useState(false);

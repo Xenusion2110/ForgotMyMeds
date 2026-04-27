@@ -1,249 +1,423 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
+  Alert,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Switch,
-  Platform,
-  Alert,
-  Modal,
-  FlatList,
-} from 'react-native';
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useFocusEffect } from "expo-router";
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+import { callFunction } from "../../../services/firebaseConfig";
 
-const TIMESLOTS = ['Morning', 'Afternoon', 'Evening', 'Bedtime', 'As Needed'];
+const TIMESLOTS = [
+  { key: "takesMorning", label: "Morning" },
+  { key: "takesAfternoon", label: "Afternoon" },
+  { key: "takesEvening", label: "Evening" },
+];
 
 const COLORS = {
-  bg: '#9bec82',
-  surface: '#ffffff',
-  surfaceAlt: '#e8ebe8',
-  border: '#30363D',
-  accent: '#3FB950',
-  accentDim: '#238636',
-  accentGlow: 'rgba(63,185,80,0.15)',
-  danger: '#F85149',
-  dangerDim: 'rgba(248,81,73,0.15)',
-  text: '#000000',
-  textMuted: '#8B949E',
-  textDim: '#484F58',
-  white: '#FFFFFF',
+  bg: "#9bec82",
+  surface: "#ffffff",
+  surfaceAlt: "#e8ebe8",
+  border: "#30363D",
+  accent: "#3FB950",
+  accentDim: "#238636",
+  accentGlow: "rgba(63,185,80,0.15)",
+  accentBlue: "#58A6FF",
+  accentBlueDim: "rgba(88,166,255,0.15)",
+  danger: "#F85149",
+  dangerDim: "rgba(248,81,73,0.15)",
+  text: "#000000",
+  textMuted: "#5A5F67",
+  textDim: "#484F58",
+  white: "#FFFFFF",
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const today = () => {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
+const toDateKey = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 };
 
-const nowISO = () => new Date().toISOString();
-
-const formatDate = (iso) => {
-  if (!iso) return '—';
-  const [y, m, d] = iso.split('-');
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${months[parseInt(m, 10) - 1]} ${parseInt(d, 10)}, ${y}`;
+const parseDateKey = (value) => {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
 };
 
-const formatTimestamp = (iso) => {
-  const d = new Date(iso);
-  return d.toLocaleString();
+const today = () => toDateKey(new Date());
+
+const addDays = (value, offset) => {
+  const date = parseDateKey(value);
+  date.setDate(date.getDate() + offset);
+  return toDateKey(date);
 };
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+const formatDate = (value) => {
+  if (!value) {
+    return "";
+  }
 
-const Label = ({ children }) => (
-  <Text style={styles.label}>{children}</Text>
-);
+  const date = parseDateKey(value);
 
-const FieldBox = ({ children }) => (
-  <View style={styles.fieldBox}>{children}</View>
-);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
 
-const TimeslotPicker = ({ value, onChange }) => (
-  <View style={styles.timeslotRow}>
-    {TIMESLOTS.map((slot) => (
-      <TouchableOpacity
-        key={slot}
-        style={[styles.timeslotChip, value === slot && styles.timeslotChipActive]}
-        onPress={() => onChange(slot)}
-        activeOpacity={0.7}
-      >
-        <Text style={[styles.timeslotText, value === slot && styles.timeslotTextActive]}>
-          {slot}
-        </Text>
-      </TouchableOpacity>
-    ))}
+const formatTimestamp = (value) => {
+  if (!value) {
+    return "";
+  }
+
+  return new Date(value).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+};
+
+const sortAdherence = (records = []) =>
+  [...records].sort((left, right) => {
+    const rightTime = right.takenAt || right.createdAt
+      ? new Date(right.takenAt || right.createdAt).getTime()
+      : parseDateKey(right.date || today()).getTime();
+    const leftTime = left.takenAt || left.createdAt
+      ? new Date(left.takenAt || left.createdAt).getTime()
+      : parseDateKey(left.date || today()).getTime();
+    return rightTime - leftTime;
+  });
+
+const getMedicationSlots = (medication) => {
+  const selectedSlots = TIMESLOTS.filter((slot) => medication?.[slot.key]).map((slot) => slot.label);
+  return selectedSlots.length ? selectedSlots : TIMESLOTS.map((slot) => slot.label);
+};
+
+const Label = ({ children }) => <Text style={styles.label}>{children}</Text>;
+
+const FieldBox = ({ children }) => <View style={styles.fieldBox}>{children}</View>;
+
+const DateStepper = ({ value, onChange }) => (
+  <View style={styles.dateStepper}>
+    <TouchableOpacity
+      style={styles.dateArrow}
+      onPress={() => onChange(addDays(value, -1))}
+      activeOpacity={0.8}
+    >
+      <Text style={styles.dateArrowText}>-</Text>
+    </TouchableOpacity>
+    <View style={styles.dateValue}>
+      <Text style={styles.dateValueText}>{formatDate(value)}</Text>
+    </View>
+    <TouchableOpacity
+      style={styles.dateArrow}
+      onPress={() => onChange(addDays(value, 1))}
+      activeOpacity={0.8}
+    >
+      <Text style={styles.dateArrowText}>+</Text>
+    </TouchableOpacity>
   </View>
 );
 
-const DateInput = ({ label, value, onChange }) => {
-  const [show, setShow] = useState(false);
+const MedicationPicker = ({ medications, selectedId, onSelect }) => (
+  <View style={styles.chipRow}>
+    {medications.map((medication) => {
+      const active = medication.id === selectedId;
 
-  // Simple YYYY-MM-DD text entry (cross-platform, no native dependency)
-  return (
-    <View>
-      <TouchableOpacity style={styles.dateButton} onPress={() => setShow((v) => !v)} activeOpacity={0.8}>
-        <Text style={styles.dateButtonText}>{value ? formatDate(value) : 'Tap to set date'}</Text>
-        <Text style={styles.dateIcon}>📅</Text>
-      </TouchableOpacity>
+      return (
+        <TouchableOpacity
+          key={medication.id}
+          style={[styles.chip, active && styles.chipActive]}
+          onPress={() => onSelect(medication.id)}
+          activeOpacity={0.75}
+        >
+          <Text style={[styles.chipText, active && styles.chipTextActive]}>
+            {medication.name}
+          </Text>
+        </TouchableOpacity>
+      );
+    })}
+  </View>
+);
 
-      {show && (
-        <View style={styles.dateInputWrap}>
-          <Text style={styles.dateHint}>Enter date as YYYY-MM-DD</Text>
-          <TextInput
-            style={styles.dateRawInput}
-            value={value}
-            onChangeText={onChange}
-            placeholder="2025-04-25"
-            placeholderTextColor={COLORS.textDim}
-            keyboardType="numbers-and-punctuation"
-            maxLength={10}
-            onBlur={() => setShow(false)}
-            autoFocus
-          />
-        </View>
-      )}
-    </View>
-  );
-};
+const TimeslotPicker = ({ options, value, onChange }) => (
+  <View style={styles.chipRow}>
+    {options.map((slot) => {
+      const active = value === slot;
 
-// ─── Log Entry Card ───────────────────────────────────────────────────────────
+      return (
+        <TouchableOpacity
+          key={slot}
+          style={[styles.chip, active && styles.chipActive]}
+          onPress={() => onChange(slot)}
+          activeOpacity={0.75}
+        >
+          <Text style={[styles.chipText, active && styles.chipTextActive]}>
+            {slot}
+          </Text>
+        </TouchableOpacity>
+      );
+    })}
+  </View>
+);
 
-const LogCard = ({ entry, index }) => (
-  <View style={[styles.logCard, index === 0 && styles.logCardFirst]}>
-    <View style={styles.logCardHeader}>
-      <Text style={styles.logMed}>{entry.medication}</Text>
-      <View style={[styles.takenBadge, !entry.taken && styles.missedBadge]}>
-        <Text style={styles.takenBadgeText}>{entry.taken ? '✓ Taken' : '✗ Missed'}</Text>
+const DetailLine = ({ label, value }) => (
+  <View style={styles.detailLine}>
+    <Text style={styles.detailLabel}>{label}</Text>
+    <Text style={styles.detailValue}>{value}</Text>
+  </View>
+);
+
+const HistoryCard = ({ item }) => (
+  <View style={styles.historyCard}>
+    <View style={styles.historyHeader}>
+      <View>
+        <Text style={styles.historyCardTitle}>{item.medicationName || "Medication"}</Text>
+        <Text style={styles.historySubtitle}>
+          {item.medicationDose || "Dose not set"}
+        </Text>
+      </View>
+      <View
+        style={[
+          styles.statusBadge,
+          item.taken ? styles.statusBadgeTaken : styles.statusBadgeMissed,
+        ]}
+      >
+        <Text
+          style={[
+            styles.statusBadgeText,
+            item.taken ? styles.statusBadgeTextTaken : styles.statusBadgeTextMissed,
+          ]}
+        >
+          {item.taken ? "Taken" : "Missed"}
+        </Text>
       </View>
     </View>
 
-    <View style={styles.logMeta}>
-      <MetaItem icon="📅" label="Scheduled" value={formatDate(entry.scheduledDate)} />
-      <MetaItem icon="🕐" label="Timeslot" value={entry.timeslot} />
-      {entry.taken && entry.dateTaken && (
-        <MetaItem icon="✅" label="Taken on" value={formatDate(entry.dateTaken)} />
-      )}
-      <MetaItem icon="🕰" label="Logged at" value={formatTimestamp(entry.loggedAt)} />
+    <View style={styles.historyMeta}>
+      <DetailLine label="Scheduled" value={formatDate(item.date)} />
+      <DetailLine label="Time slot" value={item.timeSlot || ""} />
+      <DetailLine
+        label="Logged"
+        value={formatTimestamp(item.takenAt || item.createdAt) || ""}
+      />
     </View>
   </View>
 );
 
-const MetaItem = ({ icon, label, value }) => (
-  <View style={styles.metaItem}>
-    <Text style={styles.metaIcon}>{icon}</Text>
-    <Text style={styles.metaLabel}>{label}: </Text>
-    <Text style={styles.metaValue}>{value}</Text>
-  </View>
-);
-
-// ─── Main Component ───────────────────────────────────────────────────────────
-
-export default function MedicationAdherenceLogger() {
-  const [medication, setMedication] = useState('');
+export default function DoseLogScreen() {
+  const [medications, setMedications] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [selectedMedicationId, setSelectedMedicationId] = useState("");
   const [scheduledDate, setScheduledDate] = useState(today());
-  const [timeslot, setTimeslot] = useState('Morning');
+  const [timeSlot, setTimeSlot] = useState("Morning");
   const [taken, setTaken] = useState(true);
-  const [dateTaken, setDateTaken] = useState(today());
-  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
-  const [submitted, setSubmitted] = useState(false);
+
+  const selectedMedication = useMemo(
+    () => medications.find((item) => item.id === selectedMedicationId) || null,
+    [medications, selectedMedicationId]
+  );
+
+  const timeSlotOptions = useMemo(
+    () => getMedicationSlots(selectedMedication),
+    [selectedMedication]
+  );
+
+  useEffect(() => {
+    const nextSlots = getMedicationSlots(selectedMedication);
+    setTimeSlot((current) => (nextSlots.includes(current) ? current : nextSlots[0]));
+  }, [selectedMedication]);
+
+  const loadDoseData = useCallback(async () => {
+    setLoading(true);
+
+    try {
+      const endDate = today();
+      const startDate = addDays(endDate, -30);
+      const [medicationsResponse, adherenceResponse] = await Promise.all([
+        callFunction("getAllMedications", {}, { forceRefresh: true }),
+        callFunction("getAdherenceByDateRange", { startDate, endDate }, { forceRefresh: true }),
+      ]);
+
+      const medicationList = medicationsResponse.data || [];
+      const adherenceList = sortAdherence(adherenceResponse.data || []);
+
+      setMedications(medicationList);
+      setHistory(adherenceList);
+      setSelectedMedicationId((current) =>
+        current && medicationList.some((item) => item.id === current)
+          ? current
+          : medicationList[0]?.id || ""
+      );
+    } catch (err) {
+      console.error("Dose log load error:", err);
+      Alert.alert("Dose Log", err?.message || "We couldn't load your dose log yet.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadDoseData();
+    }, [loadDoseData])
+  );
 
   const validate = () => {
-    const e = {};
-    if (!medication.trim()) e.medication = 'Medication name is required.';
-    if (!scheduledDate || !/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate))
-      e.scheduledDate = 'Enter a valid date (YYYY-MM-DD).';
-    if (!timeslot) e.timeslot = 'Select a timeslot.';
-    if (taken && (!dateTaken || !/^\d{4}-\d{2}-\d{2}$/.test(dateTaken)))
-      e.dateTaken = 'Enter a valid date taken (YYYY-MM-DD).';
-    return e;
+    const nextErrors = {};
+
+    if (!selectedMedicationId) {
+      nextErrors.medication = "Choose a medication first.";
+    }
+
+    if (!scheduledDate || !/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate)) {
+      nextErrors.date = "Choose a valid date.";
+    }
+
+    if (!timeSlot) {
+      nextErrors.timeSlot = "Choose a time slot.";
+    }
+
+    return nextErrors;
   };
 
-  const handleLog = () => {
-    const e = validate();
-    setErrors(e);
-    if (Object.keys(e).length > 0) return;
+  const handleMedicationSelect = (medicationId) => {
+    setSelectedMedicationId(medicationId);
+    setErrors((current) => ({ ...current, medication: null, timeSlot: null }));
+  };
 
-    const entry = {
-      id: Date.now().toString(),
-      medication: medication.trim(),
-      scheduledDate,
-      timeslot,
-      taken,
-      dateTaken: taken ? dateTaken : null,
-      loggedAt: nowISO(),
-    };
+  const handleSave = async () => {
+    const nextErrors = validate();
+    setErrors(nextErrors);
 
-    setLogs((prev) => [entry, ...prev]);
-    setSubmitted(true);
+    if (Object.keys(nextErrors).length > 0 || saving) {
+      return;
+    }
 
-    // Reset after short delay to show success state
-    setTimeout(() => {
-      setSubmitted(false);
-      setMedication('');
-      setScheduledDate(today());
-      setTimeslot('Morning');
-      setTaken(true);
-      setDateTaken(today());
-      setErrors({});
-    }, 1500);
+    setSaving(true);
+
+    try {
+      const existingResponse = await callFunction(
+        "getAdherenceByDateRange",
+        { startDate: scheduledDate, endDate: scheduledDate },
+        { forceRefresh: true }
+      );
+      const existingRecord = (existingResponse.data || []).find(
+        (record) =>
+          record.medicationId === selectedMedicationId && record.timeSlot === timeSlot
+      );
+
+      if (existingRecord) {
+        await callFunction("updateAdherence", {
+          adherenceId: existingRecord.id,
+          taken,
+        });
+      } else {
+        await callFunction("logAdherence", {
+          medicationId: selectedMedicationId,
+          date: scheduledDate,
+          timeSlot,
+          taken,
+        });
+      }
+
+      await loadDoseData();
+      Alert.alert("Dose Log", "Adherence saved to Firebase.");
+    } catch (err) {
+      console.error("Dose log save error:", err);
+      Alert.alert("Dose Log", err?.message || "We couldn't save this adherence record.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-
-      {/* Header */}
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={loadDoseData} tintColor={COLORS.accentDim} />
+      }
+    >
       <View style={styles.header}>
         <Text style={styles.headerEyebrow}>MEDICATION TRACKER</Text>
-        <Text style={styles.headerTitle}>Log Adherence</Text>
-        <Text style={styles.headerSub}>Record whether a medication was taken as prescribed.</Text>
+        <Text style={styles.headerTitle}>Dose Log</Text>
+        <Text style={styles.headerSub}>
+          Save taken and missed doses straight to Firebase and review recent adherence.
+        </Text>
       </View>
 
-      {/* Form Card */}
       <View style={styles.card}>
-
-        {/* Medication Name */}
         <FieldBox>
-          <Label>Medication Name</Label>
-          <TextInput
-            style={[styles.input, errors.medication && styles.inputError]}
-            value={medication}
-            onChangeText={(t) => { setMedication(t); setErrors((e) => ({ ...e, medication: null })); }}
-            placeholder="e.g. Metformin 500mg"
-            placeholderTextColor={COLORS.textDim}
-          />
-          {errors.medication && <Text style={styles.errorText}>{errors.medication}</Text>}
+          <Label>Medication</Label>
+          {medications.length ? (
+            <MedicationPicker
+              medications={medications}
+              selectedId={selectedMedicationId}
+              onSelect={handleMedicationSelect}
+            />
+          ) : (
+            <View style={styles.emptyBox}>
+              <Text style={styles.emptyBoxText}>
+                No medications in Firebase yet. Add one from the medications tab first.
+              </Text>
+            </View>
+          )}
+          {errors.medication ? <Text style={styles.errorText}>{errors.medication}</Text> : null}
         </FieldBox>
 
-        {/* Scheduled Date */}
+        {selectedMedication ? (
+          <View style={styles.summaryPanel}>
+            <Text style={styles.summaryMedication}>{selectedMedication.name}</Text>
+            <Text style={styles.summaryDose}>{selectedMedication.dose || "Dose not set"}</Text>
+            <Text style={styles.summaryMeta}>
+              Bottle quantity: {selectedMedication.capsuleQuantity}
+            </Text>
+          </View>
+        ) : null}
+
         <FieldBox>
           <Label>Scheduled Date</Label>
-          <DateInput value={scheduledDate} onChange={(v) => { setScheduledDate(v); setErrors((e) => ({ ...e, scheduledDate: null })); }} />
-          {errors.scheduledDate && <Text style={styles.errorText}>{errors.scheduledDate}</Text>}
+          <DateStepper
+            value={scheduledDate}
+            onChange={(value) => {
+              setScheduledDate(value);
+              setErrors((current) => ({ ...current, date: null }));
+            }}
+          />
+          {errors.date ? <Text style={styles.errorText}>{errors.date}</Text> : null}
         </FieldBox>
 
-        {/* Timeslot */}
         <FieldBox>
-          <Label>Timeslot</Label>
-          <TimeslotPicker value={timeslot} onChange={(v) => { setTimeslot(v); setErrors((e) => ({ ...e, timeslot: null })); }} />
-          {errors.timeslot && <Text style={styles.errorText}>{errors.timeslot}</Text>}
+          <Label>Time Slot</Label>
+          <TimeslotPicker
+            options={timeSlotOptions}
+            value={timeSlot}
+            onChange={(value) => {
+              setTimeSlot(value);
+              setErrors((current) => ({ ...current, timeSlot: null }));
+            }}
+          />
+          {errors.timeSlot ? <Text style={styles.errorText}>{errors.timeSlot}</Text> : null}
         </FieldBox>
 
-        {/* Was it taken? */}
         <FieldBox>
           <View style={styles.switchRow}>
-            <View>
-              <Text style={styles.label}>Medication Taken?</Text>
-              <Text style={styles.switchSub}>{taken ? 'Yes — medication was taken' : 'No — dose was missed'}</Text>
+            <View style={styles.switchCopy}>
+              <Text style={styles.label}>Dose Taken?</Text>
+              <Text style={styles.switchSub}>
+                {taken ? "Marked as taken" : "Marked as missed"}
+              </Text>
             </View>
             <Switch
               value={taken}
@@ -254,51 +428,36 @@ export default function MedicationAdherenceLogger() {
           </View>
         </FieldBox>
 
-        {/* Date Taken — only shown if taken */}
-        {taken && (
-          <FieldBox>
-            <Label>Date Taken</Label>
-            <DateInput value={dateTaken} onChange={(v) => { setDateTaken(v); setErrors((e) => ({ ...e, dateTaken: null })); }} />
-            {errors.dateTaken && <Text style={styles.errorText}>{errors.dateTaken}</Text>}
-          </FieldBox>
-        )}
-
-        {/* Log Created At (auto) */}
-        <FieldBox>
-          <Label>Log Created At</Label>
-          <View style={styles.autoField}>
-            <Text style={styles.autoFieldText}>Auto-stamped on submit  ·  {formatTimestamp(nowISO())}</Text>
-          </View>
-        </FieldBox>
-
-        {/* Submit Button */}
         <TouchableOpacity
-          style={[styles.submitBtn, submitted && styles.submitBtnSuccess]}
-          onPress={handleLog}
+          style={[
+            styles.submitBtn,
+            (!medications.length || saving) && styles.submitBtnDisabled,
+          ]}
+          onPress={handleSave}
           activeOpacity={0.85}
-          disabled={submitted}
+          disabled={!medications.length || saving}
         >
           <Text style={styles.submitBtnText}>
-            {submitted ? '✓  Adherence Logged!' : 'Log Adherence'}
+            {saving ? "Saving..." : "Save Adherence"}
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Log History */}
-      {logs.length > 0 && (
-        <View style={styles.historySection}>
-          <Text style={styles.historyTitle}>Recent Logs</Text>
-          {logs.map((entry, i) => (
-            <LogCard key={entry.id} entry={entry} index={i} />
-          ))}
-        </View>
-      )}
-
+      <View style={styles.historySection}>
+        <Text style={styles.historyTitle}>Recent Adherence</Text>
+        {history.length ? (
+          history.map((item) => <HistoryCard key={item.id} item={item} />)
+        ) : (
+          <View style={styles.historyEmpty}>
+            <Text style={styles.historyEmptyText}>
+              No adherence records in Firebase yet.
+            </Text>
+          </View>
+        )}
+      </View>
     </ScrollView>
   );
 }
-
-// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   root: {
@@ -309,25 +468,21 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 60,
   },
-
-  // Header
   header: {
     marginBottom: 24,
     paddingTop: 16,
   },
   headerEyebrow: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.accent,
     letterSpacing: 2.5,
     marginBottom: 6,
-    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
   },
   headerTitle: {
     fontSize: 32,
-    fontWeight: '800',
+    fontWeight: "800",
     color: COLORS.text,
-    letterSpacing: -0.5,
     marginBottom: 6,
   },
   headerSub: {
@@ -335,176 +490,180 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     lineHeight: 20,
   },
-
-  // Card
   card: {
     backgroundColor: COLORS.surface,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: COLORS.border,
     padding: 20,
-    gap: 4,
+    marginBottom: 28,
   },
   fieldBox: {
     marginBottom: 18,
   },
   label: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "700",
     color: COLORS.textMuted,
     letterSpacing: 1,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     marginBottom: 8,
-    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
   },
-
-  // Input
-  input: {
-    backgroundColor: COLORS.surfaceAlt,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: COLORS.text,
-  },
-  inputError: {
-    borderColor: COLORS.danger,
-  },
-  errorText: {
-    fontSize: 12,
-    color: COLORS.danger,
-    marginTop: 5,
-    marginLeft: 2,
-  },
-
-  // Timeslot chips
-  timeslotRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  chipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: 8,
   },
-  timeslotChip: {
+  chip: {
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 20,
     backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  timeslotChipActive: {
+  chipActive: {
     backgroundColor: COLORS.accentGlow,
     borderColor: COLORS.accent,
   },
-  timeslotText: {
+  chipText: {
     fontSize: 13,
     color: COLORS.textMuted,
-    fontWeight: '500',
+    fontWeight: "600",
   },
-  timeslotTextActive: {
-    color: COLORS.accent,
-    fontWeight: '700',
+  chipTextActive: {
+    color: COLORS.accentDim,
   },
-
-  // Switch row
+  emptyBox: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    borderStyle: "dashed",
+    backgroundColor: COLORS.surfaceAlt,
+    padding: 14,
+  },
+  emptyBoxText: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+    lineHeight: 18,
+  },
+  summaryPanel: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    backgroundColor: COLORS.surfaceAlt,
+    padding: 14,
+    marginBottom: 18,
+  },
+  summaryMedication: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: COLORS.text,
+  },
+  summaryDose: {
+    fontSize: 14,
+    color: COLORS.textMuted,
+    marginTop: 2,
+  },
+  summaryMeta: {
+    fontSize: 13,
+    color: COLORS.textDim,
+    marginTop: 8,
+  },
+  dateStepper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  dateArrow: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surfaceAlt,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dateArrowText: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: COLORS.text,
+  },
+  dateValue: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surfaceAlt,
+    justifyContent: "center",
+    paddingHorizontal: 14,
+  },
+  dateValueText: {
+    fontSize: 15,
+    color: COLORS.text,
+  },
   switchRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 16,
+  },
+  switchCopy: {
+    flex: 1,
   },
   switchSub: {
     fontSize: 13,
     color: COLORS.textMuted,
     marginTop: 2,
   },
-
-  // Date picker
-  dateButton: {
-    backgroundColor: COLORS.surfaceAlt,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  dateButtonText: {
-    fontSize: 15,
-    color: COLORS.textDim,
-  },
-  dateIcon: {
-    fontSize: 16,
-  },
-  dateInputWrap: {
-    marginTop: 8,
-    backgroundColor: COLORS.surfaceAlt,
-    borderWidth: 1,
-    borderColor: COLORS.accent,
-    borderRadius: 10,
-    padding: 12,
-  },
-  dateHint: {
-    fontSize: 11,
-    color: COLORS.textMuted,
-    marginBottom: 6,
-  },
-  dateRawInput: {
-    fontSize: 15,
-    color: COLORS.textDim,
-  },
-
-  // Auto field
-  autoField: {
-    backgroundColor: COLORS.surfaceAlt,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderStyle: 'dashed',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-  },
-  autoFieldText: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    fontFamily: Platform.OS === 'ios' ? 'Courier New' : 'monospace',
-  },
-
-  // Submit button
   submitBtn: {
-    backgroundColor: COLORS.accentDim,
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
     marginTop: 6,
+    minHeight: 52,
+    borderRadius: 12,
+    backgroundColor: COLORS.accentDim,
     borderWidth: 1,
     borderColor: COLORS.accent,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 16,
   },
-  submitBtnSuccess: {
-    backgroundColor: '#1a4d2e',
-    borderColor: COLORS.accent,
+  submitBtnDisabled: {
+    opacity: 0.65,
   },
   submitBtnText: {
     color: COLORS.white,
     fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    fontWeight: "700",
   },
-
-  // Log history
+  errorText: {
+    marginTop: 6,
+    fontSize: 12,
+    color: COLORS.danger,
+  },
   historySection: {
-    marginTop: 32,
+    marginBottom: 40,
   },
   historyTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: "700",
     color: COLORS.text,
     marginBottom: 14,
-    letterSpacing: 0.2,
   },
-  logCard: {
+  historyEmpty: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+    padding: 18,
+  },
+  historyEmptyText: {
+    fontSize: 14,
+    color: COLORS.textMuted,
+  },
+  historyCard: {
     backgroundColor: COLORS.surface,
     borderRadius: 14,
     borderWidth: 1,
@@ -512,57 +671,64 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
   },
-  logCardFirst: {
-    borderColor: COLORS.accentDim,
+  historyHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: 12,
   },
-  logCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  logMed: {
+  historyCardTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: "700",
     color: COLORS.text,
-    flex: 1,
-    marginRight: 8,
   },
-  takenBadge: {
-    backgroundColor: COLORS.accentGlow,
-    borderRadius: 20,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: COLORS.accent,
-  },
-  missedBadge: {
-    backgroundColor: COLORS.dangerDim,
-    borderColor: COLORS.danger,
-  },
-  takenBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.accent,
-  },
-  logMeta: {
-    gap: 6,
-  },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  metaIcon: {
-    fontSize: 12,
-    marginRight: 6,
-  },
-  metaLabel: {
+  historySubtitle: {
+    marginTop: 2,
     fontSize: 13,
     color: COLORS.textMuted,
   },
-  metaValue: {
+  statusBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+  },
+  statusBadgeTaken: {
+    backgroundColor: COLORS.accentGlow,
+    borderColor: COLORS.accent,
+  },
+  statusBadgeMissed: {
+    backgroundColor: COLORS.dangerDim,
+    borderColor: COLORS.danger,
+  },
+  statusBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  statusBadgeTextTaken: {
+    color: COLORS.accentDim,
+  },
+  statusBadgeTextMissed: {
+    color: COLORS.danger,
+  },
+  historyMeta: {
+    marginTop: 14,
+    gap: 8,
+  },
+  detailLine: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  detailLabel: {
+    flex: 1,
+    fontSize: 13,
+    color: COLORS.textMuted,
+  },
+  detailValue: {
+    flex: 1,
     fontSize: 13,
     color: COLORS.text,
-    fontWeight: '500',
+    textAlign: "right",
   },
 });

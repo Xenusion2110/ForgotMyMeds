@@ -28,7 +28,7 @@ export default{
     "package": "com.csm.forgotmymeds",
     "googleServicesFile": "./services/google-services.json",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/img/adaptive-icon.png",
+        "foregroundImage": "./assets/img/Logo.jpg",
         "backgroundColor": "#FFF8EB",
         "package": "com.csm.forgotmymeds",
         "googleServicesFile": "./services/google-services.json"

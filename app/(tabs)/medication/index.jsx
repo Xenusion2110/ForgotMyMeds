@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   Platform,
   RefreshControl,
@@ -23,6 +23,12 @@ const SCHEDULES = [
   { key: "takesEvening", label: "Evening" },
 ];
 
+const TIMESLOT_META = {
+  Morning:   { icon: "🌅", scheduleKey: "takesMorning" },
+  Afternoon: { icon: "☀️", scheduleKey: "takesAfternoon" },
+  Evening:   { icon: "🌙", scheduleKey: "takesEvening" },
+};
+
 const COLORS = {
   bg: "#9bec82",
   surface: "#ffffff",
@@ -44,6 +50,18 @@ const COLORS = {
 const scheduleSummary = (item) => {
   const labels = SCHEDULES.filter((slot) => item[slot.key]).map((slot) => slot.label);
   return labels.join(", ");
+};
+
+// Groups medications into Morning / Afternoon / Evening buckets.
+// A medication can appear in multiple buckets if it is scheduled for multiple slots.
+const groupMedicationsBySlot = (medications) => {
+  const groups = { Morning: [], Afternoon: [], Evening: [] };
+  medications.forEach((med) => {
+    SCHEDULES.forEach(({ key, label }) => {
+      if (med[key]) groups[label].push(med);
+    });
+  });
+  return groups;
 };
 
 const Label = ({ children }) => <Text style={styles.label}>{children}</Text>;
@@ -71,19 +89,11 @@ const SchedulePicker = ({ value, onToggle }) => (
     {SCHEDULES.map((slot) => (
       <TouchableOpacity
         key={slot.key}
-        style={[
-          styles.scheduleChip,
-          value[slot.key] && styles.scheduleChipActive,
-        ]}
+        style={[styles.scheduleChip, value[slot.key] && styles.scheduleChipActive]}
         onPress={() => onToggle(slot.key)}
         activeOpacity={0.7}
       >
-        <Text
-          style={[
-            styles.scheduleText,
-            value[slot.key] && styles.scheduleTextActive,
-          ]}
-        >
+        <Text style={[styles.scheduleText, value[slot.key] && styles.scheduleTextActive]}>
           {slot.label}
         </Text>
       </TouchableOpacity>
@@ -120,6 +130,40 @@ const MedicationCard = ({ item, onDelete, deleting }) => (
   </View>
 );
 
+// Section header + cards for one time-of-day group
+const TimeslotSection = ({ slot, items, onDelete, deletingId }) => {
+  const { icon } = TIMESLOT_META[slot];
+
+  return (
+    <View style={styles.timeslotSection}>
+      <View style={styles.timeslotHeader}>
+        <Text style={styles.timeslotIcon}>{icon}</Text>
+        <Text style={styles.timeslotTitle}>{slot}</Text>
+        <View style={styles.timeslotBadge}>
+          <Text style={styles.timeslotBadgeText}>{items.length}</Text>
+        </View>
+      </View>
+
+      {items.length > 0 ? (
+        items.map((item) => (
+          <MedicationCard
+            key={item.id}
+            item={item}
+            onDelete={onDelete}
+            deleting={deletingId === item.id}
+          />
+        ))
+      ) : (
+        <View style={styles.timeslotEmpty}>
+          <Text style={styles.timeslotEmptyText}>
+            No medications scheduled for {slot.toLowerCase()}.
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+};
+
 export default function MedicationScreen() {
   const insets = useSafeAreaInsets();
   const [name, setName] = useState("");
@@ -140,7 +184,6 @@ export default function MedicationScreen() {
 
   const loadMedications = useCallback(async () => {
     setLoading(true);
-
     try {
       const response = await callFunction("getAllMedications", {}, { forceRefresh: true });
       const medicationList = response.data || [];
@@ -164,50 +207,35 @@ export default function MedicationScreen() {
     setDosageAmount("");
     setDosageUnit("mg");
     setQuantity("");
-    setSchedule({
-      takesMorning: false,
-      takesAfternoon: false,
-      takesEvening: false,
-    });
+    setSchedule({ takesMorning: false, takesAfternoon: false, takesEvening: false });
     setErrors({});
   };
 
   const validate = () => {
     const nextErrors = {};
-
-    if (!name.trim()) {
-      nextErrors.name = "Medication name is required.";
-    }
-
+    if (!name.trim()) nextErrors.name = "Medication name is required.";
     if (!dosageAmount.trim()) {
       nextErrors.dosageAmount = "Dosage amount is required.";
     } else if (Number.isNaN(Number(dosageAmount)) || Number(dosageAmount) <= 0) {
       nextErrors.dosageAmount = "Enter a valid positive number.";
     }
-
     if (!quantity.trim()) {
       nextErrors.quantity = "Quantity is required.";
     } else if (!Number.isInteger(Number(quantity)) || Number(quantity) <= 0) {
       nextErrors.quantity = "Enter a valid whole number.";
     }
-
     if (!Object.values(schedule).some(Boolean)) {
       nextErrors.schedule = "Choose at least one schedule slot.";
     }
-
     return nextErrors;
   };
 
   const handleAdd = async () => {
     const nextErrors = validate();
     setErrors(nextErrors);
-
-    if (Object.keys(nextErrors).length > 0 || saving) {
-      return;
-    }
+    if (Object.keys(nextErrors).length > 0 || saving) return;
 
     setSaving(true);
-
     try {
       await callFunction("createMedication", {
         name: name.trim(),
@@ -218,7 +246,6 @@ export default function MedicationScreen() {
         takesEvening: schedule.takesEvening,
         notes: "",
       });
-
       clearForm();
       await loadMedications();
     } catch (err) {
@@ -229,12 +256,8 @@ export default function MedicationScreen() {
   };
 
   const handleDelete = async (medicationId) => {
-    if (deletingId) {
-      return;
-    }
-
+    if (deletingId) return;
     setDeletingId(medicationId);
-
     try {
       await callFunction("deleteMedication", { medicationId });
       setMedications((prev) => prev.filter((item) => item.id !== medicationId));
@@ -245,11 +268,22 @@ export default function MedicationScreen() {
     }
   };
 
-  const filteredMedications = search.trim()
-    ? medications.filter((item) =>
-        item.name.toLowerCase().includes(search.trim().toLowerCase())
-      )
-    : medications;
+  const filteredMedications = useMemo(() =>
+    search.trim()
+      ? medications.filter((item) =>
+          item.name.toLowerCase().includes(search.trim().toLowerCase())
+        )
+      : medications,
+    [medications, search]
+  );
+
+  // Re-group whenever the filtered list changes
+  const groupedMedications = useMemo(
+    () => groupMedicationsBySlot(filteredMedications),
+    [filteredMedications]
+  );
+
+  const totalCount = filteredMedications.length;
 
   return (
     <SafeAreaView style={styles.safe} edges={["left", "right"]}>
@@ -272,158 +306,160 @@ export default function MedicationScreen() {
           <RefreshControl refreshing={loading} onRefresh={loadMedications} />
         }
       >
-
-      <View style={styles.card}>
-        <FieldBox>
-          <Label>Medication Name</Label>
-          <TextInput
-            style={[styles.input, errors.name && styles.inputError]}
-            value={name}
-            onChangeText={(value) => {
-              setName(value);
-              setErrors((prev) => ({ ...prev, name: null }));
-            }}
-            placeholder="e.g. Metformin"
-            placeholderTextColor={COLORS.textDim}
-          />
-          {errors.name ? <Text style={styles.errorText}>{errors.name}</Text> : null}
-        </FieldBox>
-
-        <FieldBox>
-          <Label>Dosage</Label>
-          <View style={styles.dosageRow}>
+        {/* ── Add medication form ── */}
+        <View style={styles.card}>
+          <FieldBox>
+            <Label>Medication Name</Label>
             <TextInput
-              style={[
-                styles.input,
-                styles.dosageInput,
-                errors.dosageAmount && styles.inputError,
-              ]}
-              value={dosageAmount}
+              style={[styles.input, errors.name && styles.inputError]}
+              value={name}
               onChangeText={(value) => {
-                setDosageAmount(value);
-                setErrors((prev) => ({ ...prev, dosageAmount: null }));
+                setName(value);
+                setErrors((prev) => ({ ...prev, name: null }));
               }}
-              placeholder="500"
+              placeholder="e.g. Metformin"
               placeholderTextColor={COLORS.textDim}
-              keyboardType="decimal-pad"
             />
-            <View style={styles.dosageUnitWrap}>
-              <Text style={styles.dosageUnitSelected}>{dosageUnit}</Text>
+            {errors.name ? <Text style={styles.errorText}>{errors.name}</Text> : null}
+          </FieldBox>
+
+          <FieldBox>
+            <Label>Dosage</Label>
+            <View style={styles.dosageRow}>
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.dosageInput,
+                  errors.dosageAmount && styles.inputError,
+                ]}
+                value={dosageAmount}
+                onChangeText={(value) => {
+                  setDosageAmount(value);
+                  setErrors((prev) => ({ ...prev, dosageAmount: null }));
+                }}
+                placeholder="500"
+                placeholderTextColor={COLORS.textDim}
+                keyboardType="decimal-pad"
+              />
+              <View style={styles.dosageUnitWrap}>
+                <Text style={styles.dosageUnitSelected}>{dosageUnit}</Text>
+              </View>
+            </View>
+            {errors.dosageAmount ? (
+              <Text style={styles.errorText}>{errors.dosageAmount}</Text>
+            ) : null}
+            <View style={styles.unitWrap}>
+              <DosageUnitPicker value={dosageUnit} onChange={setDosageUnit} />
+            </View>
+          </FieldBox>
+
+          <FieldBox>
+            <Label>Bottle Quantity</Label>
+            <View style={styles.quantityRow}>
+              <TouchableOpacity
+                style={styles.qtyBtn}
+                onPress={() => {
+                  const next = Math.max(1, (parseInt(quantity, 10) || 0) - 1);
+                  setQuantity(String(next));
+                  setErrors((prev) => ({ ...prev, quantity: null }));
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.qtyBtnText}>-</Text>
+              </TouchableOpacity>
+              <TextInput
+                style={[styles.input, styles.qtyInput, errors.quantity && styles.inputError]}
+                value={quantity}
+                onChangeText={(value) => {
+                  setQuantity(value.replace(/[^0-9]/g, ""));
+                  setErrors((prev) => ({ ...prev, quantity: null }));
+                }}
+                placeholder="30"
+                placeholderTextColor={COLORS.textDim}
+                keyboardType="number-pad"
+                textAlign="center"
+              />
+              <TouchableOpacity
+                style={styles.qtyBtn}
+                onPress={() => {
+                  const next = (parseInt(quantity, 10) || 0) + 1;
+                  setQuantity(String(next));
+                  setErrors((prev) => ({ ...prev, quantity: null }));
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.qtyBtnText}>+</Text>
+              </TouchableOpacity>
+            </View>
+            {errors.quantity ? (
+              <Text style={styles.errorText}>{errors.quantity}</Text>
+            ) : null}
+          </FieldBox>
+
+          <FieldBox>
+            <Label>Daily Schedule</Label>
+            <SchedulePicker
+              value={schedule}
+              onToggle={(key) =>
+                setSchedule((prev) => ({ ...prev, [key]: !prev[key] }))
+              }
+            />
+            {errors.schedule ? (
+              <Text style={styles.errorText}>{errors.schedule}</Text>
+            ) : null}
+          </FieldBox>
+
+          <TouchableOpacity
+            style={[styles.submitBtn, saving && styles.submitBtnMuted]}
+            onPress={handleAdd}
+            activeOpacity={0.85}
+            disabled={saving}
+          >
+            <Text style={styles.submitBtnText}>
+              {saving ? "Saving..." : "Add Medication"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ── Saved medications grouped by time slot ── */}
+        <View style={styles.listSection}>
+          <View style={styles.listHeader}>
+            <Text style={styles.listTitle}>Saved Medications</Text>
+            <View style={styles.countBadge}>
+              <Text style={styles.countBadgeText}>{totalCount}</Text>
             </View>
           </View>
-          {errors.dosageAmount ? (
-            <Text style={styles.errorText}>{errors.dosageAmount}</Text>
-          ) : null}
-          <View style={styles.unitWrap}>
-            <DosageUnitPicker value={dosageUnit} onChange={setDosageUnit} />
-          </View>
-        </FieldBox>
 
-        <FieldBox>
-          <Label>Bottle Quantity</Label>
-          <View style={styles.quantityRow}>
-            <TouchableOpacity
-              style={styles.qtyBtn}
-              onPress={() => {
-                const next = Math.max(1, (parseInt(quantity, 10) || 0) - 1);
-                setQuantity(String(next));
-                setErrors((prev) => ({ ...prev, quantity: null }));
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.qtyBtnText}>-</Text>
-            </TouchableOpacity>
+          <View style={styles.searchBox}>
             <TextInput
-              style={[styles.input, styles.qtyInput, errors.quantity && styles.inputError]}
-              value={quantity}
-              onChangeText={(value) => {
-                setQuantity(value.replace(/[^0-9]/g, ""));
-                setErrors((prev) => ({ ...prev, quantity: null }));
-              }}
-              placeholder="30"
+              value={search}
+              onChangeText={setSearch}
+              placeholder="Search medications..."
               placeholderTextColor={COLORS.textDim}
-              keyboardType="number-pad"
-              textAlign="center"
+              style={styles.searchInput}
             />
-            <TouchableOpacity
-              style={styles.qtyBtn}
-              onPress={() => {
-                const next = (parseInt(quantity, 10) || 0) + 1;
-                setQuantity(String(next));
-                setErrors((prev) => ({ ...prev, quantity: null }));
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.qtyBtnText}>+</Text>
-            </TouchableOpacity>
           </View>
-          {errors.quantity ? (
-            <Text style={styles.errorText}>{errors.quantity}</Text>
-          ) : null}
-        </FieldBox>
 
-        <FieldBox>
-          <Label>Daily Schedule</Label>
-          <SchedulePicker
-            value={schedule}
-            onToggle={(key) =>
-              setSchedule((prev) => ({ ...prev, [key]: !prev[key] }))
-            }
-          />
-          {errors.schedule ? (
-            <Text style={styles.errorText}>{errors.schedule}</Text>
-          ) : null}
-        </FieldBox>
-
-        <TouchableOpacity
-          style={[styles.submitBtn, saving && styles.submitBtnMuted]}
-          onPress={handleAdd}
-          activeOpacity={0.85}
-          disabled={saving}
-        >
-          <Text style={styles.submitBtnText}>
-            {saving ? "Saving..." : "Add Medication"}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.listSection}>
-        <View style={styles.listHeader}>
-          <Text style={styles.listTitle}>Saved Medications</Text>
-          <View style={styles.countBadge}>
-            <Text style={styles.countBadgeText}>{filteredMedications.length}</Text>
-          </View>
+          {totalCount === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyIcon}>Medication list is empty.</Text>
+              <Text style={styles.emptySubText}>
+                Saved medications will appear here.
+              </Text>
+            </View>
+          ) : (
+            SCHEDULES.map(({ label }) => (
+              <TimeslotSection
+                key={label}
+                slot={label}
+                items={groupedMedications[label] || []}
+                onDelete={handleDelete}
+                deletingId={deletingId}
+              />
+            ))
+          )}
         </View>
-
-        <View style={styles.searchBox}>
-          <TextInput
-            value={search}
-            onChangeText={setSearch}
-            placeholder="Search medications..."
-            placeholderTextColor={COLORS.textDim}
-            style={styles.searchInput}
-          />
-        </View>
-
-        {filteredMedications.length ? (
-          filteredMedications.map((item) => (
-            <MedicationCard
-              key={item.id}
-              item={item}
-              onDelete={handleDelete}
-              deleting={deletingId === item.id}
-            />
-          ))
-        ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>Medication list is empty.</Text>
-            <Text style={styles.emptySubText}>
-              Saved medications will appear here.
-            </Text>
-          </View>
-        )}
-      </View>
-    </ScrollView>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -623,6 +659,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.3,
   },
+
+  // ── Saved medications list ──
   listSection: {
     marginTop: 32,
   },
@@ -663,6 +701,75 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     paddingVertical: 12,
   },
+  emptyState: {
+    marginTop: 10,
+    alignItems: "center",
+    paddingVertical: 32,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderStyle: "dashed",
+    borderRadius: 16,
+    backgroundColor: COLORS.surface,
+  },
+  emptyIcon: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: COLORS.text,
+  },
+  emptySubText: {
+    fontSize: 13,
+    color: COLORS.textDim,
+    marginTop: 6,
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
+
+  // ── Time slot section ──
+  timeslotSection: {
+    marginBottom: 24,
+  },
+  timeslotHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+  },
+  timeslotIcon: {
+    fontSize: 18,
+  },
+  timeslotTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: COLORS.text,
+    flex: 1,
+  },
+  timeslotBadge: {
+    backgroundColor: COLORS.surfaceAlt,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  timeslotBadgeText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: COLORS.textMuted,
+  },
+  timeslotEmpty: {
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+    padding: 14,
+  },
+  timeslotEmptyText: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+  },
+
+  // ── Medication card ──
   medCard: {
     backgroundColor: COLORS.surface,
     borderRadius: 14,
@@ -727,27 +834,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: COLORS.textMuted,
     marginBottom: 6,
-  },
-  emptyState: {
-    marginTop: 10,
-    alignItems: "center",
-    paddingVertical: 32,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderStyle: "dashed",
-    borderRadius: 16,
-    backgroundColor: COLORS.surface,
-  },
-  emptyIcon: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
-  emptySubText: {
-    fontSize: 13,
-    color: COLORS.textDim,
-    marginTop: 6,
-    textAlign: "center",
-    paddingHorizontal: 20,
   },
 });

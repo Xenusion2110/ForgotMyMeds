@@ -25,6 +25,14 @@ import {
   unregisterFriendMessagingToken,
 } from "../../../services/notifications";
 
+// ── Added Bedtime as fourth slot ──────────────────────────────────────────
+const TIMESLOTS = [
+  { key: "takesMorning",   label: "Morning" },
+  { key: "takesAfternoon", label: "Afternoon" },
+  { key: "takesEvening",   label: "Evening" },
+  { key: "takesBedtime",   label: "Bedtime" },
+];
+
 const DASH_COLORS = {
   surface: "#FFFFFF",
   border: "#D8E6D2",
@@ -32,10 +40,13 @@ const DASH_COLORS = {
   muted: "#5C7457",
   pale: "#F4F9F1",
   success: "#238636",
+  successGlow: "rgba(35,134,54,0.12)",
   danger: "#C0362C",
+  dangerGlow: "rgba(192,54,44,0.12)",
   warning: "#B97917",
 };
 
+// ── Helpers ───────────────────────────────────────────────────────────────
 const todayLabel = () =>
   new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -45,16 +56,15 @@ const todayLabel = () =>
 
 const getTodayKey = () => {
   const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 };
 
 const getAdherenceSummary = (records = []) => {
   const totalRecords = records.length;
-  const takenCount = records.filter((record) => record.taken).length;
-
+  const takenCount = records.filter((r) => r.taken).length;
   return {
     totalRecords,
     takenCount,
@@ -65,57 +75,81 @@ const getAdherenceSummary = (records = []) => {
 };
 
 const getAdherenceTone = (percent) => {
-  if (percent === null) {
-    return DASH_COLORS.muted;
-  }
-
-  if (percent >= 80) {
-    return DASH_COLORS.success;
-  }
-
-  if (percent >= 50) {
-    return DASH_COLORS.warning;
-  }
-
+  if (percent === null) return DASH_COLORS.muted;
+  if (percent >= 80) return DASH_COLORS.success;
+  if (percent >= 50) return DASH_COLORS.warning;
   return DASH_COLORS.danger;
 };
 
-const getFriendshipStatusLabel = (status) => {
-  if (!status) {
-    return "";
-  }
+const getFriendshipStatusLabel = (status) =>
+  status ? status.charAt(0).toUpperCase() + status.slice(1) : "";
 
-  return status.charAt(0).toUpperCase() + status.slice(1);
+// Group adherence records by timeSlot label
+const groupBySlot = (records = []) => {
+  const groups = { Morning: [], Afternoon: [], Evening: [], Bedtime: [] };
+  records.forEach((rec) => {
+    const slot = rec.timeSlot;
+    if (groups[slot]) groups[slot].push(rec);
+    else groups.Morning.push(rec); // fallback
+  });
+  return groups;
 };
 
-const AdherenceRow = ({ record }) => (
-  <View style={styles.recordRow}>
+// ── Micro adherence row — ultra-compact single line ───────────────────────
+const MicroAdherenceRow = ({ record }) => (
+  <View style={styles.microRow}>
     <View
       style={[
-        styles.recordDot,
+        styles.microDot,
         { backgroundColor: record.taken ? DASH_COLORS.success : DASH_COLORS.danger },
       ]}
     />
-    <View style={styles.recordCopy}>
-      <Text style={styles.recordMedication}>
-        {record.medicationName || "Medication"}
-      </Text>
-      <Text style={styles.recordMeta}>
-        {record.timeSlot || "Dose"}
-        {record.date ? `  |  ${record.date}` : ""}
-      </Text>
-    </View>
+    <Text style={styles.microName} numberOfLines={1}>
+      {record.medicationName || "Medication"}
+    </Text>
     <Text
       style={[
-        styles.recordState,
+        styles.microState,
         { color: record.taken ? DASH_COLORS.success : DASH_COLORS.danger },
       ]}
     >
-      {record.taken ? "Taken" : "Missed"}
+      {record.taken ? "✓" : "✕"}
     </Text>
   </View>
 );
 
+// ── Slot group inside the adherence block ─────────────────────────────────
+const SlotGroup = ({ label, records }) => {
+  if (records.length === 0) return null;
+  return (
+    <View style={styles.slotGroup}>
+      <Text style={styles.slotLabel}>{label}</Text>
+      {records.map((rec) => (
+        <MicroAdherenceRow key={rec.id} record={rec} />
+      ))}
+    </View>
+  );
+};
+
+// ── Adherence block shown inside a PersonCard ─────────────────────────────
+const AdherenceBlock = ({ records }) => {
+  const grouped = useMemo(() => groupBySlot(records), [records]);
+  const hasAny = records.length > 0;
+
+  if (!hasAny) return null;
+
+  return (
+    <View style={styles.adherenceBlock}>
+      {TIMESLOTS.map(({ label }) =>
+        grouped[label]?.length > 0 ? (
+          <SlotGroup key={label} label={label} records={grouped[label]} />
+        ) : null
+      )}
+    </View>
+  );
+};
+
+// ── Stats strip ───────────────────────────────────────────────────────────
 const SummaryStat = ({ label, value, color }) => (
   <View style={styles.summaryStat}>
     <Text style={[styles.summaryValue, color && { color }]}>{value}</Text>
@@ -123,12 +157,14 @@ const SummaryStat = ({ label, value, color }) => (
   </View>
 );
 
+// ── Person card ───────────────────────────────────────────────────────────
 const PersonCard = ({ title, subtitle, records = [], badge, actions = [] }) => {
   const summary = getAdherenceSummary(records);
   const adherenceColor = getAdherenceTone(summary.adherencePercent);
 
   return (
     <View style={styles.card}>
+      {/* Header */}
       <View style={styles.cardHeader}>
         <View style={styles.cardHeaderCopy}>
           <View style={styles.cardTitleRow}>
@@ -143,25 +179,28 @@ const PersonCard = ({ title, subtitle, records = [], badge, actions = [] }) => {
         </View>
       </View>
 
+      {/* Stats */}
       <View style={styles.cardStats}>
         <SummaryStat
           label="Taken"
-          value={summary.totalRecords ? String(summary.takenCount) : ""}
+          value={summary.totalRecords ? String(summary.takenCount) : "—"}
           color={summary.totalRecords ? DASH_COLORS.success : undefined}
         />
         <SummaryStat
-          label="Records"
-          value={summary.totalRecords ? String(summary.totalRecords) : ""}
+          label="Total"
+          value={summary.totalRecords ? String(summary.totalRecords) : "—"}
         />
         <SummaryStat
-          label="Adherence"
-          value={
-            summary.adherencePercent === null ? "" : `${summary.adherencePercent}%`
-          }
+          label="Rate"
+          value={summary.adherencePercent === null ? "—" : `${summary.adherencePercent}%`}
           color={summary.adherencePercent === null ? undefined : adherenceColor}
         />
       </View>
 
+      {/* Slot-grouped adherence rows */}
+      <AdherenceBlock records={records} />
+
+      {/* Action buttons */}
       {actions.length ? (
         <View style={styles.cardActions}>
           {actions.map((action, index) => (
@@ -190,18 +229,11 @@ const PersonCard = ({ title, subtitle, records = [], badge, actions = [] }) => {
           ))}
         </View>
       ) : null}
-
-      {records.length ? (
-        <View style={styles.recordsWrap}>
-          {records.map((record) => (
-            <AdherenceRow key={record.id} record={record} />
-          ))}
-        </View>
-      ) : null}
     </View>
   );
 };
 
+// ── Main Dashboard ────────────────────────────────────────────────────────
 export default function Dashboard() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -219,7 +251,6 @@ export default function Dashboard() {
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
-
     try {
       const today = getTodayKey();
       const [userResponse, medicationsResponse, adherenceResponse, friendshipsResponse] =
@@ -261,10 +292,7 @@ export default function Dashboard() {
     setupFriendMessaging().catch((err) => {
       console.log("Friend messaging setup error:", err?.message || err);
     });
-
-    return () => {
-      teardownFriendMessaging();
-    };
+    return () => teardownFriendMessaging();
   }, []);
 
   const onLogout = async () => {
@@ -279,18 +307,12 @@ export default function Dashboard() {
 
   const onAddFriend = async () => {
     const value = friendInput.trim();
-
-    if (!value || addingFriend) {
-      return;
-    }
-
+    if (!value || addingFriend) return;
     setAddingFriend(true);
-
     try {
       const payload = value.includes("@")
         ? { recipientEmail: value }
         : { recipientId: value };
-
       await callFunction("createFriendshipRequest", payload, { forceRefresh: true });
       setFriendInput("");
       setShowAddFriend(false);
@@ -298,22 +320,15 @@ export default function Dashboard() {
       Alert.alert("Friend Request Sent", "Your friend request has been added.");
     } catch (err) {
       console.error("Add friend error:", err);
-      Alert.alert(
-        "Add Friend",
-        err?.message || "We couldn't send that friend request yet."
-      );
+      Alert.alert("Add Friend", err?.message || "We couldn't send that friend request yet.");
     } finally {
       setAddingFriend(false);
     }
   };
 
   const onAcceptInvitation = async (friendshipId) => {
-    if (!friendshipId || updatingFriendshipId) {
-      return;
-    }
-
+    if (!friendshipId || updatingFriendshipId) return;
     setUpdatingFriendshipId(friendshipId);
-
     try {
       await callFunction(
         "updateFriendshipStatus",
@@ -324,10 +339,7 @@ export default function Dashboard() {
       Alert.alert("Invitation Accepted", "Your friend invitation was accepted.");
     } catch (err) {
       console.error("Accept friend error:", err);
-      Alert.alert(
-        "Accept Invitation",
-        err?.message || "We couldn't accept that invitation yet."
-      );
+      Alert.alert("Accept Invitation", err?.message || "We couldn't accept that invitation yet.");
     } finally {
       setUpdatingFriendshipId("");
     }
@@ -335,16 +347,11 @@ export default function Dashboard() {
 
   const filteredFriendships = useMemo(() => {
     const query = search.trim().toLowerCase();
-
-    if (!query) {
-      return friendships;
-    }
-
+    if (!query) return friendships;
     return friendships.filter((entry) => {
-      const displayName = entry.friend?.displayName?.toLowerCase() || "";
+      const name = entry.friend?.displayName?.toLowerCase() || "";
       const email = entry.friend?.email?.toLowerCase() || "";
-
-      return displayName.includes(query) || email.includes(query);
+      return name.includes(query) || email.includes(query);
     });
   }, [friendships, search]);
 
@@ -352,7 +359,6 @@ export default function Dashboard() {
     userProfile?.displayName || auth.currentUser?.displayName || "Your account";
   const userSubtitle = userProfile?.email || auth.currentUser?.email || "";
   const currentUserId = userProfile?.userId || auth.currentUser?.uid || "";
-  const summary = getAdherenceSummary(todayAdherence);
 
   return (
     <SafeAreaView style={styles.safe} edges={["left", "right"]}>
@@ -377,20 +383,7 @@ export default function Dashboard() {
           <RefreshControl refreshing={loading} onRefresh={loadDashboard} />
         }
       >
-        <View style={styles.summaryStrip}>
-          <SummaryStat label="Medications" value={String(medications.length)} />
-          <SummaryStat
-            label="Records"
-            value={summary.totalRecords ? String(summary.totalRecords) : ""}
-          />
-          <SummaryStat
-            label="Taken"
-            value={summary.totalRecords ? String(summary.takenCount) : ""}
-            color={summary.totalRecords ? DASH_COLORS.success : undefined}
-          />
-          <SummaryStat label="Friends" value={String(friendships.length)} />
-        </View>
-
+        {/* ── Your Adherence ── */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Your Adherence</Text>
         </View>
@@ -402,11 +395,12 @@ export default function Dashboard() {
           badge="You"
         />
 
+        {/* ── Friends ── */}
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionTitle}>Friends</Text>
           <TouchableOpacity
             style={styles.addFriendButton}
-            onPress={() => setShowAddFriend((current) => !current)}
+            onPress={() => setShowAddFriend((c) => !c)}
             activeOpacity={0.85}
           >
             <Ionicons
@@ -427,11 +421,7 @@ export default function Dashboard() {
               Enter your friend's email or account ID.
             </Text>
             <View style={styles.searchBox}>
-              <Ionicons
-                name="person-add-outline"
-                size={18}
-                color={DASH_COLORS.muted}
-              />
+              <Ionicons name="person-add-outline" size={18} color={DASH_COLORS.muted} />
               <TextInput
                 placeholder="friend@email.com or account ID"
                 placeholderTextColor={DASH_COLORS.muted}
@@ -557,44 +547,36 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 4,
   },
-  scroll: {
-    flex: 1,
-  },
+  scroll: { flex: 1 },
   content: {
     padding: 18,
     paddingBottom: 48,
     gap: 14,
   },
-  summaryStrip: {
-    flexDirection: "row",
-    backgroundColor: DASH_COLORS.surface,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: DASH_COLORS.border,
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-  },
+
+  // ── Stats strip ──
   summaryStat: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 52,
+    minHeight: 48,
   },
   summaryValue: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "800",
     color: DASH_COLORS.text,
   },
   summaryLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
     color: DASH_COLORS.muted,
-    marginTop: 4,
+    marginTop: 3,
     textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
-  sectionHeader: {
-    marginTop: 6,
-  },
+
+  // ── Section headers ──
+  sectionHeader: { marginTop: 6 },
   sectionHeaderRow: {
     marginTop: 6,
     flexDirection: "row",
@@ -609,6 +591,8 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.8,
   },
+
+  // ── Add friend button ──
   addFriendButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -625,21 +609,18 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: DASH_COLORS.success,
   },
+
+  // ── Person card ──
   card: {
     backgroundColor: DASH_COLORS.surface,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: DASH_COLORS.border,
     padding: 16,
-    gap: 14,
+    gap: 12,
   },
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-  },
-  cardHeaderCopy: {
-    flex: 1,
-  },
+  cardHeader: { flexDirection: "row", alignItems: "flex-start" },
+  cardHeaderCopy: { flex: 1 },
   cardTitleRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -647,7 +628,7 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "800",
     color: DASH_COLORS.text,
   },
@@ -665,16 +646,16 @@ const styles = StyleSheet.create({
     color: DASH_COLORS.success,
   },
   cardSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
     color: DASH_COLORS.muted,
-    marginTop: 4,
+    marginTop: 3,
   },
   cardStats: {
     flexDirection: "row",
     backgroundColor: DASH_COLORS.pale,
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
   },
   cardActions: {
     flexDirection: "row",
@@ -682,8 +663,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   cardAction: {
-    minHeight: 42,
-    borderRadius: 12,
+    minHeight: 40,
+    borderRadius: 10,
     backgroundColor: DASH_COLORS.success,
     borderWidth: 1,
     borderColor: DASH_COLORS.success,
@@ -696,47 +677,60 @@ const styles = StyleSheet.create({
     backgroundColor: DASH_COLORS.surface,
     borderColor: DASH_COLORS.border,
   },
-  cardActionDisabled: {
-    opacity: 0.65,
-  },
+  cardActionDisabled: { opacity: 0.65 },
   cardActionText: {
     color: colors.white,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "800",
   },
-  cardActionTextSecondary: {
-    color: DASH_COLORS.text,
-  },
-  recordsWrap: {
+  cardActionTextSecondary: { color: DASH_COLORS.text },
+
+  // ── Adherence block (slot-grouped) ──
+  adherenceBlock: {
+    borderTopWidth: 1,
+    borderTopColor: DASH_COLORS.border,
+    paddingTop: 10,
     gap: 10,
   },
-  recordRow: {
+
+  // ── Slot group ──
+  slotGroup: { gap: 4 },
+  slotLabel: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: DASH_COLORS.muted,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 2,
+  },
+
+  // ── Micro adherence row ──
+  microRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 7,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 7,
+    backgroundColor: DASH_COLORS.pale,
   },
-  recordDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  microDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 99,
   },
-  recordCopy: {
+  microName: {
     flex: 1,
-  },
-  recordMedication: {
-    fontSize: 14,
-    fontWeight: "700",
+    fontSize: 12,
+    fontWeight: "600",
     color: DASH_COLORS.text,
   },
-  recordMeta: {
+  microState: {
     fontSize: 12,
-    color: DASH_COLORS.muted,
-    marginTop: 2,
+    fontWeight: "800",
   },
-  recordState: {
-    fontSize: 12,
-    fontWeight: "700",
-  },
+
+  // ── Search / add-friend ──
   searchBox: {
     flexDirection: "row",
     alignItems: "center",
@@ -781,14 +775,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 16,
   },
-  primaryActionDisabled: {
-    opacity: 0.65,
-  },
+  primaryActionDisabled: { opacity: 0.65 },
   primaryActionText: {
     color: colors.white,
     fontSize: 15,
     fontWeight: "800",
   },
+
+  // ── Empty state ──
   emptyState: {
     borderWidth: 1,
     borderColor: DASH_COLORS.border,

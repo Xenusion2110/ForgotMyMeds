@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   Alert,
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -16,10 +15,12 @@ import { callFunction } from "../../../services/firebaseConfig";
 import { LinearGradient } from "expo-linear-gradient";
 import { syncDoseReminderNotifications } from "../../../services/notifications";
 
+// ── Added Bedtime as fourth slot ──────────────────────────────────────────
 const TIMESLOTS = [
-  { key: "takesMorning", label: "Morning" },
+  { key: "takesMorning",   label: "Morning" },
   { key: "takesAfternoon", label: "Afternoon" },
-  { key: "takesEvening", label: "Evening" },
+  { key: "takesEvening",   label: "Evening" },
+  { key: "takesBedtime",   label: "Bedtime" },
 ];
 
 const COLORS = {
@@ -40,22 +41,17 @@ const COLORS = {
   white: "#FFFFFF",
 };
 
-const TIMESLOT_ICONS = {
-  Morning: "🌅",
-  Afternoon: "☀️",
-  Evening: "🌙",
-};
-
+// ── Date helpers ──────────────────────────────────────────────────────────
 const toDateKey = (date) => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 };
 
 const parseDateKey = (value) => {
-  const [year, month, day] = value.split("-").map(Number);
-  return new Date(year, month - 1, day);
+  const [y, m, d] = value.split("-").map(Number);
+  return new Date(y, m - 1, d);
 };
 
 const today = () => toDateKey(new Date());
@@ -68,63 +64,58 @@ const addDays = (value, offset) => {
 
 const formatDate = (value) => {
   if (!value) return "";
-  const date = parseDateKey(value);
-  return date.toLocaleDateString("en-US", {
+  return parseDateKey(value).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
 };
 
-const formatTimestamp = (value) => {
-  if (!value) return "";
-  return new Date(value).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-};
-
-const sortAdherence = (records = []) =>
-  [...records].sort((left, right) => {
-    const rightTime =
-      right.takenAt || right.createdAt
-        ? new Date(right.takenAt || right.createdAt).getTime()
-        : parseDateKey(right.date || today()).getTime();
-    const leftTime =
-      left.takenAt || left.createdAt
-        ? new Date(left.takenAt || left.createdAt).getTime()
-        : parseDateKey(left.date || today()).getTime();
-    return rightTime - leftTime;
-  });
-
-const getMedicationSlots = (medication) => {
-  const selectedSlots = TIMESLOTS.filter((slot) => medication?.[slot.key]).map(
-    (slot) => slot.label
-  );
-  return selectedSlots.length ? selectedSlots : TIMESLOTS.map((slot) => slot.label);
-};
-
-// Groups history records by their timeSlot value
-const groupByTimeSlot = (records) => {
-  const groups = { Morning: [], Afternoon: [], Evening: [] };
-  records.forEach((record) => {
-    const slot = record.timeSlot;
-    if (groups[slot]) {
-      groups[slot].push(record);
-    } else {
-      // If timeSlot is unknown/missing, put into Morning as fallback
-      groups.Morning.push(record);
+// ── Build a merged view: every medication appears under its slot(s).
+//    Each entry is either an existing adherence record (has .id) or a
+//    "pending" stub derived from the medication list.
+const buildSlotEntries = (medications, adherenceRecords, dateKey) => {
+  // Index existing records by medicationId + timeSlot for quick lookup
+  const recordIndex = {};
+  adherenceRecords.forEach((rec) => {
+    if (rec.date === dateKey) {
+      const key = `${rec.medicationId}__${rec.timeSlot}`;
+      recordIndex[key] = rec;
     }
   });
+
+  // Groups: slot label → array of display items
+  const groups = { Morning: [], Afternoon: [], Evening: [], Bedtime: [] };
+
+  medications.forEach((med) => {
+    TIMESLOTS.forEach(({ key, label }) => {
+      if (!med[key]) return; // medication not scheduled for this slot
+      const lookupKey = `${med.id}__${label}`;
+      const existing = recordIndex[lookupKey];
+
+      groups[label].push(
+        existing
+          ? { ...existing, _medicationName: med.name, _dose: med.dose }
+          : {
+              // Stub — no adherence record yet for this slot today
+              id: null,
+              medicationId: med.id,
+              date: dateKey,
+              timeSlot: label,
+              taken: false,
+              takenAt: null,
+              _medicationName: med.name,
+              _dose: med.dose,
+              _isStub: true,
+            }
+      );
+    });
+  });
+
   return groups;
 };
 
-const Label = ({ children }) => <Text style={styles.label}>{children}</Text>;
-
-const FieldBox = ({ children }) => <View style={styles.fieldBox}>{children}</View>;
-
+// ── Date stepper shown above the history list ─────────────────────────────
 const DateStepper = ({ value, onChange }) => (
   <View style={styles.dateStepper}>
     <TouchableOpacity
@@ -132,7 +123,7 @@ const DateStepper = ({ value, onChange }) => (
       onPress={() => onChange(addDays(value, -1))}
       activeOpacity={0.8}
     >
-      <Text style={styles.dateArrowText}>-</Text>
+      <Text style={styles.dateArrowText}>‹</Text>
     </TouchableOpacity>
     <View style={styles.dateValue}>
       <Text style={styles.dateValueText}>{formatDate(value)}</Text>
@@ -142,210 +133,113 @@ const DateStepper = ({ value, onChange }) => (
       onPress={() => onChange(addDays(value, 1))}
       activeOpacity={0.8}
     >
-      <Text style={styles.dateArrowText}>+</Text>
+      <Text style={styles.dateArrowText}>›</Text>
     </TouchableOpacity>
   </View>
 );
 
-const MedicationPicker = ({ medications, selectedId, onSelect }) => (
-  <View style={styles.chipRow}>
-    {medications.map((medication) => {
-      const active = medication.id === selectedId;
-      return (
-        <TouchableOpacity
-          key={medication.id}
-          style={[styles.chip, active && styles.chipActive]}
-          onPress={() => onSelect(medication.id)}
-          activeOpacity={0.75}
-        >
-          <Text style={[styles.chipText, active && styles.chipTextActive]}>
-            {medication.name}
-          </Text>
-        </TouchableOpacity>
-      );
-    })}
-  </View>
-);
-
-const TimeslotPicker = ({ options, value, onChange }) => (
-  <View style={styles.chipRow}>
-    {options.map((slot) => {
-      const active = value === slot;
-      return (
-        <TouchableOpacity
-          key={slot}
-          style={[styles.chip, active && styles.chipActive]}
-          onPress={() => onChange(slot)}
-          activeOpacity={0.75}
-        >
-          <Text style={[styles.chipText, active && styles.chipTextActive]}>{slot}</Text>
-        </TouchableOpacity>
-      );
-    })}
-  </View>
-);
-
-const DetailLine = ({ label, value }) => (
-  <View style={styles.detailLine}>
-    <Text style={styles.detailLabel}>{label}</Text>
-    <Text style={styles.detailValue}>{value}</Text>
-  </View>
-);
-
-// Individual history card with an inline "Mark as Taken" button
-const HistoryCard = ({ item, onMarkTaken, markingId }) => {
-  const isMarking = markingId === item.id;
+// ── Single-row adherence card ─────────────────────────────────────────────
+// The "taken" indicator and "Mark Taken" button are merged into one button.
+const AdherenceCard = ({ item, onToggleTaken, togglingId }) => {
+  const isToggling = togglingId === (item.id ?? `${item.medicationId}__${item.timeSlot}`);
 
   return (
-    <View style={styles.historyCard}>
-      <View style={styles.historyHeader}>
-        <View style={styles.historyHeaderLeft}>
-          <Text style={styles.historyCardTitle}>{item.medicationName || "Medication"}</Text>
-          <Text style={styles.historySubtitle}>{item.medicationDose || "Dose not set"}</Text>
-        </View>
-
-        <View style={styles.historyHeaderRight}>
-          <View
-            style={[
-              styles.statusBadge,
-              item.taken ? styles.statusBadgeTaken : styles.statusBadgeMissed,
-            ]}
-          >
-            <Text
-              style={[
-                styles.statusBadgeText,
-                item.taken ? styles.statusBadgeTextTaken : styles.statusBadgeTextMissed,
-              ]}
-            >
-              {item.taken ? "Taken" : "Missed"}
-            </Text>
-          </View>
-
-          {/* Mark as Taken button — only shown when not already taken */}
-          {!item.taken && (
-            <TouchableOpacity
-              style={[styles.markTakenBtn, isMarking && styles.markTakenBtnDisabled]}
-              onPress={() => onMarkTaken(item)}
-              activeOpacity={0.8}
-              disabled={isMarking}
-            >
-              <Text style={styles.markTakenBtnText}>
-                {isMarking ? "Saving…" : "Mark Taken"}
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          {/* Green confirmation shown when already taken */}
-          {item.taken && (
-            <View style={styles.takenConfirmBadge}>
-              <Text style={styles.takenConfirmText}>✓</Text>
-            </View>
-          )}
-        </View>
+    <View style={styles.adherenceCard}>
+      {/* Name + dose */}
+      <View style={styles.adherenceInfo}>
+        <Text style={styles.adherenceName} numberOfLines={1}>
+          {item._medicationName}
+        </Text>
+        <Text style={styles.adherenceDose} numberOfLines={1}>
+          {item._dose}
+        </Text>
       </View>
 
-      <View style={styles.historyMeta}>
-        <DetailLine label="Scheduled" value={formatDate(item.date)} />
-        <DetailLine label="Time slot" value={item.timeSlot || ""} />
-        <DetailLine
-          label="Logged"
-          value={formatTimestamp(item.takenAt || item.createdAt) || "—"}
-        />
-      </View>
+      {/* Single merged taken/mark-taken button */}
+      <TouchableOpacity
+        style={[
+          styles.takenBtn,
+          item.taken ? styles.takenBtnTaken : styles.takenBtnMissed,
+          isToggling && styles.takenBtnDisabled,
+        ]}
+        onPress={() => onToggleTaken(item)}
+        activeOpacity={0.8}
+        disabled={isToggling}
+      >
+        <Text
+          style={[
+            styles.takenBtnText,
+            item.taken ? styles.takenBtnTextTaken : styles.takenBtnTextMissed,
+          ]}
+        >
+          {isToggling ? "…" : item.taken ? "✓ Taken" : "Mark Taken"}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
-// Section header for each time-of-day group
-const TimeslotSection = ({ slot, items, onMarkTaken, markingId }) => {
-  const icon = TIMESLOT_ICONS[slot] || "💊";
-
-  return (
-    <View style={styles.timeslotSection}>
-      <View style={styles.timeslotHeader}>
-        <Text style={styles.timeslotIcon}>{icon}</Text>
-        <Text style={styles.timeslotTitle}>{slot}</Text>
-        <View style={styles.timeslotBadge}>
-          <Text style={styles.timeslotBadgeText}>{items.length}</Text>
-        </View>
+// ── Time-slot section ─────────────────────────────────────────────────────
+const TimeslotSection = ({ slot, items, onToggleTaken, togglingId }) => (
+  <View style={styles.timeslotSection}>
+    <View style={styles.timeslotHeader}>
+      <Text style={styles.timeslotTitle}>{slot}</Text>
+      <View style={styles.timeslotBadge}>
+        <Text style={styles.timeslotBadgeText}>{items.length}</Text>
       </View>
+    </View>
 
-      {items.length > 0 ? (
-        items.map((item) => (
-          <HistoryCard
-            key={item.id}
+    {items.length > 0 ? (
+      items.map((item) => {
+        const cardKey = item.id ?? `stub__${item.medicationId}__${item.timeSlot}`;
+        return (
+          <AdherenceCard
+            key={cardKey}
             item={item}
-            onMarkTaken={onMarkTaken}
-            markingId={markingId}
+            onToggleTaken={onToggleTaken}
+            togglingId={togglingId}
           />
-        ))
-      ) : (
-        <View style={styles.timeslotEmpty}>
-          <Text style={styles.timeslotEmptyText}>No doses logged for {slot.toLowerCase()}.</Text>
-        </View>
-      )}
-    </View>
-  );
-};
+        );
+      })
+    ) : (
+      <View style={styles.timeslotEmpty}>
+        <Text style={styles.timeslotEmptyText}>
+          No medications scheduled for {slot.toLowerCase()}.
+        </Text>
+      </View>
+    )}
+  </View>
+);
 
+// ── Main Screen ───────────────────────────────────────────────────────────
 export default function DoseLogScreen() {
   const insets = useSafeAreaInsets();
   const [medications, setMedications] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [selectedMedicationId, setSelectedMedicationId] = useState("");
-  const [scheduledDate, setScheduledDate] = useState(today());
-  const [timeSlot, setTimeSlot] = useState("Morning");
-  const [taken, setTaken] = useState(true);
+  const [adherenceRecords, setAdherenceRecords] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(today());
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [markingId, setMarkingId] = useState(null); // tracks which card is being marked
-  const [errors, setErrors] = useState({});
-
-  const selectedMedication = useMemo(
-    () => medications.find((item) => item.id === selectedMedicationId) || null,
-    [medications, selectedMedicationId]
-  );
-
-  const timeSlotOptions = useMemo(
-    () => getMedicationSlots(selectedMedication),
-    [selectedMedication]
-  );
-
-  // Grouped history for the three time-of-day sections
-  const groupedHistory = useMemo(() => groupByTimeSlot(history), [history]);
-
-  useEffect(() => {
-    const nextSlots = getMedicationSlots(selectedMedication);
-    setTimeSlot((current) => (nextSlots.includes(current) ? current : nextSlots[0]));
-  }, [selectedMedication]);
+  const [togglingId, setTogglingId] = useState(null);
 
   const loadDoseData = useCallback(async () => {
     setLoading(true);
     try {
       const endDate = today();
       const startDate = addDays(endDate, -30);
-      const [medicationsResponse, adherenceResponse] = await Promise.all([
+      const [medsRes, adherenceRes] = await Promise.all([
         callFunction("getAllMedications", {}, { forceRefresh: true }),
         callFunction("getAdherenceByDateRange", { startDate, endDate }, { forceRefresh: true }),
       ]);
-
-      const medicationList = medicationsResponse.data || [];
-      const adherenceList = sortAdherence(adherenceResponse.data || []);
-
+      const medicationList = medsRes.data || [];
+      const adherenceList = adherenceRes.data || [];
       setMedications(medicationList);
-      setHistory(adherenceList);
-      setSelectedMedicationId((current) =>
-        current && medicationList.some((item) => item.id === current)
-          ? current
-          : medicationList[0]?.id || ""
-      );
+      setAdherenceRecords(adherenceList);
       await syncDoseReminderNotifications({
         medications: medicationList,
-        adherenceRecords: adherenceList.filter((record) => record.date === today()),
+        adherenceRecords: adherenceList.filter((r) => r.date === today()),
       });
     } catch (err) {
       console.error("Dose log load error:", err);
-      Alert.alert("Dose Log", err?.message || "We couldn't load your dose log yet.");
+      Alert.alert("Dose Log", err?.message || "We couldn't load your dose log.");
     } finally {
       setLoading(false);
     }
@@ -357,95 +251,84 @@ export default function DoseLogScreen() {
     }, [loadDoseData])
   );
 
-  const validate = () => {
-    const nextErrors = {};
-    if (!selectedMedicationId) nextErrors.medication = "Choose a medication first.";
-    if (!scheduledDate || !/^\d{4}-\d{2}-\d{2}$/.test(scheduledDate))
-      nextErrors.date = "Choose a valid date.";
-    if (!timeSlot) nextErrors.timeSlot = "Choose a time slot.";
-    return nextErrors;
-  };
+  // Build grouped entries whenever medications, records, or date changes
+  const groupedEntries = useMemo(
+    () => buildSlotEntries(medications, adherenceRecords, selectedDate),
+    [medications, adherenceRecords, selectedDate]
+  );
 
-  const handleMedicationSelect = (medicationId) => {
-    setSelectedMedicationId(medicationId);
-    setErrors((current) => ({ ...current, medication: null, timeSlot: null }));
-  };
-
-  const handleSave = async () => {
-    const nextErrors = validate();
-    setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0 || saving) return;
-
-    setSaving(true);
-    try {
-      const existingResponse = await callFunction(
-        "getAdherenceByDateRange",
-        { startDate: scheduledDate, endDate: scheduledDate },
-        { forceRefresh: true }
-      );
-      const existingRecord = (existingResponse.data || []).find(
-        (record) =>
-          record.medicationId === selectedMedicationId && record.timeSlot === timeSlot
-      );
-
-      if (existingRecord) {
-        await callFunction("updateAdherence", {
-          adherenceId: existingRecord.id,
-          taken,
-        });
-      } else {
-        await callFunction("logAdherence", {
-          medicationId: selectedMedicationId,
-          date: scheduledDate,
-          timeSlot,
-          taken,
-        });
-      }
-
-      await loadDoseData();
-      Alert.alert("Dose Log", "Dose saved.");
-    } catch (err) {
-      console.error("Dose log save error:", err);
-      Alert.alert("Dose Log", err?.message || "We couldn't save this adherence record.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Called when the user taps "Mark Taken" on a history card
-  const handleMarkTaken = useCallback(
+  // Toggle a dose between taken / not-taken.
+  // If no record exists yet, log one (taken = true). If one exists, flip it.
+  const handleToggleTaken = useCallback(
     async (item) => {
-      if (markingId) return; // prevent double-tap
-      setMarkingId(item.id);
+      const cardKey = item.id ?? `${item.medicationId}__${item.timeSlot}`;
+      setTogglingId(cardKey);
 
-      // Optimistically update the local state so the button turns green immediately
-      setHistory((prev) =>
-        prev.map((record) =>
-          record.id === item.id ? { ...record, taken: true, takenAt: new Date().toISOString() } : record
-        )
-      );
+      // Optimistic update
+      const nowIso = new Date().toISOString();
+      setAdherenceRecords((prev) => {
+        if (item._isStub || !item.id) {
+          // Add a temporary optimistic record
+          return [
+            ...prev,
+            {
+              id: `__optimistic__${cardKey}`,
+              medicationId: item.medicationId,
+              date: item.date,
+              timeSlot: item.timeSlot,
+              taken: true,
+              takenAt: nowIso,
+            },
+          ];
+        }
+        return prev.map((r) =>
+          r.id === item.id ? { ...r, taken: !r.taken, takenAt: !r.taken ? nowIso : null } : r
+        );
+      });
 
       try {
-        await callFunction("updateAdherence", {
-          adherenceId: item.id,
-          taken: true,
-        });
-        // Refresh to get authoritative server state
+        if (item._isStub || !item.id) {
+          // No existing record — create one marked as taken
+          await callFunction("logAdherence", {
+            medicationId: item.medicationId,
+            date: item.date,
+            timeSlot: item.timeSlot,
+            taken: true,
+          });
+        } else {
+          await callFunction("updateAdherence", {
+            adherenceId: item.id,
+            taken: !item.taken,
+          });
+        }
+        // Refresh to get the real record id
         await loadDoseData();
       } catch (err) {
-        // Roll back the optimistic update on failure
-        setHistory((prev) =>
-          prev.map((record) =>
-            record.id === item.id ? { ...record, taken: false, takenAt: null } : record
-          )
+        // Roll back optimistic update
+        setAdherenceRecords((prev) =>
+          item._isStub || !item.id
+            ? prev.filter((r) => r.id !== `__optimistic__${cardKey}`)
+            : prev.map((r) =>
+                r.id === item.id ? { ...r, taken: item.taken, takenAt: item.takenAt } : r
+              )
         );
-        console.error("Mark taken error:", err);
-        Alert.alert("Dose Log", err?.message || "We couldn't update this dose record.");
+        console.error("Toggle taken error:", err);
+        Alert.alert("Dose Log", err?.message || "We couldn't update this dose.");
       } finally {
-        setMarkingId(null);
+        setTogglingId(null);
       }
     },
-    [markingId, loadDoseData]
+    [loadDoseData]
+  );
+
+  const totalForDate = useMemo(
+    () => Object.values(groupedEntries).reduce((sum, arr) => sum + arr.length, 0),
+    [groupedEntries]
+  );
+
+  const takenForDate = useMemo(
+    () => Object.values(groupedEntries).reduce((sum, arr) => sum + arr.filter((e) => e.taken).length, 0),
+    [groupedEntries]
   );
 
   return (
@@ -457,7 +340,7 @@ export default function DoseLogScreen() {
         <Text style={styles.headerEyebrow}>FORGOTMYMEDS</Text>
         <Text style={styles.headerTitle}>Dose Log</Text>
         <Text style={styles.headerSub}>
-          Record taken and missed doses and review your recent history.
+          Track your daily doses across all time slots.
         </Text>
       </LinearGradient>
 
@@ -465,122 +348,48 @@ export default function DoseLogScreen() {
         style={styles.scroll}
         contentContainerStyle={styles.content}
         refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={loadDoseData}
-            tintColor={COLORS.accentDim}
-          />
+          <RefreshControl refreshing={loading} onRefresh={loadDoseData} />
         }
       >
-        {/* ── Log form card ── */}
-        <View style={styles.card}>
-          <FieldBox>
-            <Label>Medication</Label>
-            {medications.length ? (
-              <MedicationPicker
-                medications={medications}
-                selectedId={selectedMedicationId}
-                onSelect={handleMedicationSelect}
-              />
-            ) : (
-              <View style={styles.emptyBox}>
-                <Text style={styles.emptyBoxText}>
-                  No medications yet. Add one from the medications tab first.
-                </Text>
-              </View>
-            )}
-            {errors.medication ? (
-              <Text style={styles.errorText}>{errors.medication}</Text>
-            ) : null}
-          </FieldBox>
-
-          {selectedMedication ? (
-            <View style={styles.summaryPanel}>
-              <Text style={styles.summaryMedication}>{selectedMedication.name}</Text>
-              <Text style={styles.summaryDose}>
-                {selectedMedication.dose || "Dose not set"}
+        {/* ── Date picker + summary bar ── */}
+        <View style={styles.dateCard}>
+          <DateStepper value={selectedDate} onChange={setSelectedDate} />
+          {totalForDate > 0 && (
+            <View style={styles.summaryBar}>
+              <Text style={styles.summaryText}>
+                {takenForDate} of {totalForDate} doses taken
               </Text>
-              <Text style={styles.summaryMeta}>
-                Bottle quantity: {selectedMedication.capsuleQuantity}
-              </Text>
-            </View>
-          ) : null}
-
-          <FieldBox>
-            <Label>Scheduled Date</Label>
-            <DateStepper
-              value={scheduledDate}
-              onChange={(value) => {
-                setScheduledDate(value);
-                setErrors((current) => ({ ...current, date: null }));
-              }}
-            />
-            {errors.date ? <Text style={styles.errorText}>{errors.date}</Text> : null}
-          </FieldBox>
-
-          <FieldBox>
-            <Label>Time Slot</Label>
-            <TimeslotPicker
-              options={timeSlotOptions}
-              value={timeSlot}
-              onChange={(value) => {
-                setTimeSlot(value);
-                setErrors((current) => ({ ...current, timeSlot: null }));
-              }}
-            />
-            {errors.timeSlot ? <Text style={styles.errorText}>{errors.timeSlot}</Text> : null}
-          </FieldBox>
-
-          <FieldBox>
-            <View style={styles.switchRow}>
-              <View style={styles.switchCopy}>
-                <Text style={styles.label}>Dose Taken?</Text>
-                <Text style={styles.switchSub}>
-                  {taken ? "Marked as taken" : "Marked as missed"}
-                </Text>
+              <View style={styles.progressTrack}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${Math.round((takenForDate / totalForDate) * 100)}%` },
+                  ]}
+                />
               </View>
-              <Switch
-                value={taken}
-                onValueChange={setTaken}
-                trackColor={{ false: COLORS.danger, true: COLORS.accentDim }}
-                thumbColor={taken ? COLORS.accent : COLORS.danger}
-              />
             </View>
-          </FieldBox>
-
-          <TouchableOpacity
-            style={[
-              styles.submitBtn,
-              (!medications.length || saving) && styles.submitBtnDisabled,
-            ]}
-            onPress={handleSave}
-            activeOpacity={0.85}
-            disabled={!medications.length || saving}
-          >
-            <Text style={styles.submitBtnText}>{saving ? "Saving..." : "Save Adherence"}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* ── Recent Adherence grouped by time slot ── */}
-        <View style={styles.historySection}>
-          <Text style={styles.historyTitle}>Recent Adherence</Text>
-
-          {history.length === 0 ? (
-            <View style={styles.historyEmpty}>
-              <Text style={styles.historyEmptyText}>No dose history yet.</Text>
-            </View>
-          ) : (
-            TIMESLOTS.map(({ label }) => (
-              <TimeslotSection
-                key={label}
-                slot={label}
-                items={groupedHistory[label] || []}
-                onMarkTaken={handleMarkTaken}
-                markingId={markingId}
-              />
-            ))
           )}
         </View>
+
+        {/* ── Adherence list grouped by time slot ── */}
+        {medications.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No medications yet.</Text>
+            <Text style={styles.emptySubText}>
+              Add medications from the Medications tab to start tracking.
+            </Text>
+          </View>
+        ) : (
+          TIMESLOTS.map(({ label }) => (
+            <TimeslotSection
+              key={label}
+              slot={label}
+              items={groupedEntries[label] || []}
+              onToggleTaken={handleToggleTaken}
+              togglingId={togglingId}
+            />
+          ))
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -595,9 +404,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingBottom: 18,
   },
-  scroll: {
-    flex: 1,
-  },
+  scroll: { flex: 1 },
   content: {
     padding: 18,
     paddingBottom: 60,
@@ -623,85 +430,16 @@ const styles = StyleSheet.create({
     marginTop: 4,
     opacity: 0.9,
   },
-  card: {
+
+  // ── Date card ──
+  dateCard: {
     backgroundColor: COLORS.surface,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: 20,
-    marginBottom: 28,
-  },
-  fieldBox: {
-    marginBottom: 18,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: COLORS.textMuted,
-    letterSpacing: 1,
-    textTransform: "uppercase",
-    marginBottom: 8,
-  },
-  chipRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 20,
-    backgroundColor: COLORS.surfaceAlt,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  chipActive: {
-    backgroundColor: COLORS.accentGlow,
-    borderColor: COLORS.accent,
-  },
-  chipText: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    fontWeight: "600",
-  },
-  chipTextActive: {
-    color: COLORS.accentDim,
-  },
-  emptyBox: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 12,
-    borderStyle: "dashed",
-    backgroundColor: COLORS.surfaceAlt,
-    padding: 14,
-  },
-  emptyBoxText: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    lineHeight: 18,
-  },
-  summaryPanel: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 12,
-    backgroundColor: COLORS.surfaceAlt,
-    padding: 14,
-    marginBottom: 18,
-  },
-  summaryMedication: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
-  summaryDose: {
-    fontSize: 14,
-    color: COLORS.textMuted,
-    marginTop: 2,
-  },
-  summaryMeta: {
-    fontSize: 13,
-    color: COLORS.textDim,
-    marginTop: 8,
+    padding: 16,
+    marginBottom: 24,
+    gap: 14,
   },
   dateStepper: {
     flexDirection: "row",
@@ -719,7 +457,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   dateArrowText: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: "700",
     color: COLORS.text,
   },
@@ -735,82 +473,37 @@ const styles = StyleSheet.create({
   },
   dateValueText: {
     fontSize: 15,
+    fontWeight: "600",
     color: COLORS.text,
   },
-  switchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 16,
-  },
-  switchCopy: {
-    flex: 1,
-  },
-  switchSub: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-    marginTop: 2,
-  },
-  submitBtn: {
-    marginTop: 6,
-    minHeight: 52,
-    borderRadius: 12,
-    backgroundColor: COLORS.accentDim,
-    borderWidth: 1,
-    borderColor: COLORS.accent,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 16,
-  },
-  submitBtnDisabled: {
-    opacity: 0.65,
-  },
-  submitBtnText: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  errorText: {
-    marginTop: 6,
+
+  // ── Progress summary ──
+  summaryBar: { gap: 6 },
+  summaryText: {
     fontSize: 12,
-    color: COLORS.danger,
-  },
-
-  // ── History section ──
-  historySection: {
-    marginBottom: 40,
-  },
-  historyTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: COLORS.text,
-    marginBottom: 14,
-  },
-  historyEmpty: {
-    borderRadius: 14,
-    borderWidth: 1,
-    borderStyle: "dashed",
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-    padding: 18,
-  },
-  historyEmptyText: {
-    fontSize: 14,
+    fontWeight: "600",
     color: COLORS.textMuted,
+    letterSpacing: 0.3,
+  },
+  progressTrack: {
+    height: 6,
+    borderRadius: 99,
+    backgroundColor: COLORS.surfaceAlt,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: 99,
+    backgroundColor: COLORS.accent,
   },
 
-  // ── Time slot section ──
-  timeslotSection: {
-    marginBottom: 24,
-  },
+  // ── Time-slot section ──
+  timeslotSection: { marginBottom: 22 },
   timeslotHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginBottom: 10,
-  },
-  timeslotIcon: {
-    fontSize: 18,
+    marginBottom: 8,
   },
   timeslotTitle: {
     fontSize: 15,
@@ -837,123 +530,83 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     borderColor: COLORS.border,
     backgroundColor: COLORS.surface,
-    padding: 14,
+    padding: 12,
   },
-  timeslotEmptyText: {
-    fontSize: 13,
+  timeslotEmptyText: { fontSize: 13, color: COLORS.textMuted },
+
+  // ── Single-row adherence card ──
+  adherenceCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 8,
+    gap: 10,
+  },
+  adherenceInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  adherenceName: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: COLORS.text,
+  },
+  adherenceDose: {
+    fontSize: 12,
     color: COLORS.textMuted,
   },
 
-  // ── History card ──
-  historyCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 14,
+  // Merged taken/mark-taken button
+  takenBtn: {
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderWidth: 1,
+    minWidth: 90,
+    alignItems: "center",
+  },
+  takenBtnTaken: {
+    backgroundColor: COLORS.accentGlow,
+    borderColor: COLORS.accent,
+  },
+  takenBtnMissed: {
+    backgroundColor: COLORS.dangerDim,
+    borderColor: COLORS.danger,
+  },
+  takenBtnDisabled: { opacity: 0.5 },
+  takenBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  takenBtnTextTaken: { color: COLORS.accentDim },
+  takenBtnTextMissed: { color: COLORS.danger },
+
+  // ── Empty state ──
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 40,
     borderWidth: 1,
     borderColor: COLORS.border,
-    padding: 16,
-    marginBottom: 12,
+    borderStyle: "dashed",
+    borderRadius: 16,
+    backgroundColor: COLORS.surface,
+    paddingHorizontal: 24,
   },
-  historyHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  historyHeaderLeft: {
-    flex: 1,
-  },
-  historyHeaderRight: {
-    alignItems: "flex-end",
-    gap: 8,
-  },
-  historyCardTitle: {
+  emptyText: {
     fontSize: 16,
     fontWeight: "700",
     color: COLORS.text,
   },
-  historySubtitle: {
-    marginTop: 2,
+  emptySubText: {
     fontSize: 13,
-    color: COLORS.textMuted,
-  },
-  statusBadge: {
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderWidth: 1,
-  },
-  statusBadgeTaken: {
-    backgroundColor: COLORS.accentGlow,
-    borderColor: COLORS.accent,
-  },
-  statusBadgeMissed: {
-    backgroundColor: COLORS.dangerDim,
-    borderColor: COLORS.danger,
-  },
-  statusBadgeText: {
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  statusBadgeTextTaken: {
-    color: COLORS.accentDim,
-  },
-  statusBadgeTextMissed: {
-    color: COLORS.danger,
-  },
-
-  // ── Mark Taken button ──
-  markTakenBtn: {
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: COLORS.accentDim,
-    borderWidth: 1,
-    borderColor: COLORS.accent,
-  },
-  markTakenBtnDisabled: {
-    opacity: 0.55,
-  },
-  markTakenBtnText: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: COLORS.white,
-  },
-
-  // ── Green checkmark shown after taken ──
-  takenConfirmBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 999,
-    backgroundColor: COLORS.accentGlow,
-    borderWidth: 1,
-    borderColor: COLORS.accent,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  takenConfirmText: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: COLORS.accentDim,
-  },
-
-  historyMeta: {
-    marginTop: 14,
-    gap: 8,
-  },
-  detailLine: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: 12,
-  },
-  detailLabel: {
-    flex: 1,
-    fontSize: 13,
-    color: COLORS.textMuted,
-  },
-  detailValue: {
-    flex: 1,
-    fontSize: 13,
-    color: COLORS.text,
-    textAlign: "right",
+    color: COLORS.textDim,
+    marginTop: 6,
+    textAlign: "center",
+    lineHeight: 18,
   },
 });

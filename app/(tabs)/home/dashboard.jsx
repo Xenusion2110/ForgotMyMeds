@@ -248,6 +248,7 @@ export default function Dashboard() {
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [addingFriend, setAddingFriend] = useState(false);
   const [updatingFriendshipId, setUpdatingFriendshipId] = useState("");
+  const [remindingFriendId, setRemindingFriendId] = useState("");
 
   const loadDashboard = useCallback(async () => {
     setLoading(true);
@@ -342,6 +343,30 @@ export default function Dashboard() {
       Alert.alert("Accept Invitation", err?.message || "We couldn't accept that invitation yet.");
     } finally {
       setUpdatingFriendshipId("");
+    }
+  };
+
+  const onRemindFriend = async (friendId) => {
+    if (!friendId || remindingFriendId) return;
+    setRemindingFriendId(friendId);
+    try {
+      const response = await callFunction(
+        "sendFriendReminder",
+        { recipientId: friendId },
+        { forceRefresh: true }
+      );
+
+      Alert.alert(
+        "Reminder Sent",
+        response?.data?.delivered
+          ? "Your reminder is on its way."
+          : "We couldn't reach your friend right now."
+      );
+    } catch (err) {
+      console.error("Friend reminder error:", err);
+      Alert.alert("Send Reminder", err?.message || "We couldn't send that reminder yet.");
+    } finally {
+      setRemindingFriendId("");
     }
   };
 
@@ -489,6 +514,12 @@ export default function Dashboard() {
                     },
                   }),
                 tone: "secondary",
+              });
+              actions.push({
+                label: "Remind",
+                loadingLabel: "Sending...",
+                onPress: () => onRemindFriend(entry.friend.id),
+                disabled: remindingFriendId === entry.friend.id,
               });
             }
 

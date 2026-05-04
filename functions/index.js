@@ -59,11 +59,12 @@ const serializeMedicationSnapshot = (doc) => {
         userId: data.user?.id || null,
         name: data.name || '',
         dose: data.dose || '',
-        capsuleQuantity: data.capsuleQuantity || 0,
+        capsuleQuantity: normalizeCapsuleQuantity(data.capsuleQuantity),
         notes: data.notes || '',
         takesMorning: Boolean(data.takesMorning),
         takesAfternoon: Boolean(data.takesAfternoon),
         takesEvening: Boolean(data.takesEvening),
+        takesBedtime: Boolean(data.takesBedtime),
         createdAt: timestampToIso(data.createdAt),
     };
 };
@@ -221,35 +222,47 @@ const getConversationDocsForUsers = async (uid, friendId) => {
     });
 };
 
-const sendFriendMessagePush = async (recipientId, senderId, senderLabel, text) => {
+const normalizeCapsuleQuantity = (value) => {
+    const parsedValue = Number.parseInt(value, 10);
+
+    if (!Number.isFinite(parsedValue) || parsedValue < 0) {
+        return 0;
+    }
+
+    return parsedValue;
+};
+
+const getNextCapsuleQuantity = (currentValue, delta) => {
+    return Math.max(0, normalizeCapsuleQuantity(currentValue) + delta);
+};
+
+const getPushTokenDocsForUser = async (recipientId) => {
     const tokenSnapshot = await db.collection('MessagingToken')
         .where('user', '==', userRef(recipientId))
         .get();
-    const tokenDocs = tokenSnapshot.docs.filter((doc) => doc.data()?.token);
+
+    return tokenSnapshot.docs.filter((doc) => doc.data()?.token);
+};
+
+const sendPushToUser = async ({ recipientId, notification, data, channelId }) => {
+    const tokenDocs = await getPushTokenDocsForUser(recipientId);
 
     if (!tokenDocs.length) {
-        return;
+        return {
+            delivered: false,
+            successCount: 0,
+        };
     }
 
     const tokens = tokenDocs.map((doc) => doc.data().token);
-    const notificationBody = text.length > 140 ? `${text.slice(0, 137)}...` : text;
     const response = await getMessaging().sendEachForMulticast({
         tokens,
-        notification: {
-            title: senderLabel,
-            body: notificationBody,
-        },
-        data: {
-            type: 'friend-message',
-            senderId,
-            friendUserId: senderId,
-            title: senderLabel,
-            body: notificationBody,
-        },
+        notification,
+        data,
         android: {
             priority: 'high',
             notification: {
-                channelId: 'friend-messages',
+                channelId,
             },
         },
         apns: {
@@ -276,6 +289,98 @@ const sendFriendMessagePush = async (recipientId, senderId, senderLabel, text) =
             db.collection('MessagingToken').doc(docId).delete()
         )
     );
+
+    return {
+        delivered: response.successCount > 0,
+        successCount: response.successCount,
+    };
+};
+
+const sendFriendMessagePush = async (recipientId, senderId, senderLabel, text) => {
+    const notificationBody = text.length > 140 ? `${text.slice(0, 137)}...` : text;
+
+    return sendPushToUser({
+        recipientId,
+        notification: {
+            title: senderLabel,
+            body: notificationBody,
+        },
+        data: {
+            type: 'friend-message',
+            senderId,
+            friendUserId: senderId,
+            title: senderLabel,
+            body: notificationBody,
+        },
+        channelId: 'friend-messages',
+    });
+};
+
+const sendFriendReminderPush = async (recipientId, senderId, senderLabel) => {
+    const title = `${senderLabel} sent a reminder`;
+    const body = 'It is time to check in on your medications.';
+
+    return sendPushToUser({
+        recipientId,
+        notification: {
+            title,
+            body,
+        },
+        data: {
+            type: 'friend-reminder',
+            senderId,
+            friendUserId: senderId,
+            title,
+            body,
+        },
+        channelId: 'friend-reminders',
+    });
+};
+
+const getMedicationDocForUser = async (uid, medicationId) => {
+    const medicationRef = db.collection('Medication').doc(medicationId);
+    const medicationDoc = await medicationRef.get();
+
+    if (!medicationDoc.exists) {
+        throw new HttpsError('not-found', 'That medication could not be found.');
+    }
+
+    if (medicationDoc.data()?.user?.id !== uid) {
+        throw new HttpsError('permission-denied', 'You can only update your own medications.');
+    }
+
+    return medicationDoc;
+};
+
+const getAdherenceDocForUser = async (uid, adherenceId) => {
+    const adherenceRef = db.collection('AdherenceRecord').doc(adherenceId);
+    const adherenceDoc = await adherenceRef.get();
+
+    if (!adherenceDoc.exists) {
+        throw new HttpsError('not-found', 'That dose record could not be found.');
+    }
+
+    if (adherenceDoc.data()?.user?.id !== uid) {
+        throw new HttpsError('permission-denied', 'You can only update your own dose records.');
+    }
+
+    return adherenceDoc;
+};
+
+const findAdherenceDocForSlot = async (uid, medicationId, date, timeSlot) => {
+    const snapshot = await db.collection('AdherenceRecord')
+        .where('user', '==', userRef(uid))
+        .get();
+
+    return snapshot.docs.find((doc) => {
+        const data = doc.data() || {};
+
+        return (
+            data.medication?.id === medicationId &&
+            timestampToDateString(data.date) === date &&
+            data.timeSlot === timeSlot
+        );
+    }) || null;
 };
 
 const getMedicationDocsForUser = async (uid) => {
@@ -412,16 +517,26 @@ exports.getTodayAdherence = onCall(callableOptions, async (request) => {
 exports.createMedication = onCall(callableOptions, async (request) => {
     const { uid } = await requireAuth(request);
 
-    const { name, dose, capsuleQuantity, takesMorning, takesAfternoon, takesEvening, notes } = request.data;
-
-    const docRef = await db.collection('Medication').add({
-        user: userRef(uid),
+    const {
         name,
         dose,
         capsuleQuantity,
         takesMorning,
         takesAfternoon,
         takesEvening,
+        takesBedtime,
+        notes,
+    } = request.data;
+
+    const docRef = await db.collection('Medication').add({
+        user: userRef(uid),
+        name,
+        dose,
+        capsuleQuantity: normalizeCapsuleQuantity(capsuleQuantity),
+        takesMorning: Boolean(takesMorning),
+        takesAfternoon: Boolean(takesAfternoon),
+        takesEvening: Boolean(takesEvening),
+        takesBedtime: Boolean(takesBedtime),
         notes: notes || null,
         createdAt: admin.firestore.Timestamp.now()
     });
@@ -436,9 +551,31 @@ exports.getAllMedications = onCall(callableOptions, async (request) => {
 });
 
 exports.updateMedication = onCall(callableOptions, async (request) => {
-    await requireAuth(request);
+    const { uid } = await requireAuth(request);
 
     const{ medicationId, idToken, ...updateData } = request.data;
+
+    await getMedicationDocForUser(uid, medicationId);
+
+    if (Object.prototype.hasOwnProperty.call(updateData, 'capsuleQuantity')) {
+        updateData.capsuleQuantity = normalizeCapsuleQuantity(updateData.capsuleQuantity);
+    }
+
+    if (Object.prototype.hasOwnProperty.call(updateData, 'takesMorning')) {
+        updateData.takesMorning = Boolean(updateData.takesMorning);
+    }
+
+    if (Object.prototype.hasOwnProperty.call(updateData, 'takesAfternoon')) {
+        updateData.takesAfternoon = Boolean(updateData.takesAfternoon);
+    }
+
+    if (Object.prototype.hasOwnProperty.call(updateData, 'takesEvening')) {
+        updateData.takesEvening = Boolean(updateData.takesEvening);
+    }
+
+    if (Object.prototype.hasOwnProperty.call(updateData, 'takesBedtime')) {
+        updateData.takesBedtime = Boolean(updateData.takesBedtime);
+    }
 
     await db.collection('Medication').doc(medicationId).update(updateData);
 
@@ -446,7 +583,9 @@ exports.updateMedication = onCall(callableOptions, async (request) => {
 });
 
 exports.deleteMedication = onCall(callableOptions, async (request) => {
-    await requireAuth(request);
+    const { uid } = await requireAuth(request);
+
+    await getMedicationDocForUser(uid, request.data.medicationId);
 
     await db.collection('Medication').doc(request.data.medicationId).delete();
 
@@ -459,17 +598,76 @@ exports.logAdherence = onCall(callableOptions, async (request) => {
 
     const { medicationId, date, timeSlot, taken } = request.data;
 
-    const docRef = await db.collection('AdherenceRecord').add({
-        user: userRef(uid),
-        medication: db.collection('Medication').doc(medicationId),
-        date: localDateToTimestamp(date),
-        timeSlot,
-        taken,
-        takenAt: taken ? admin.firestore.Timestamp.now() : null,
-        createdAt: admin.firestore.Timestamp.now()
+    if (!medicationId || !date || !timeSlot) {
+        throw new HttpsError('invalid-argument', 'Medication, date, and time slot are required.');
+    }
+
+    const existingAdherenceDoc = await findAdherenceDocForSlot(uid, medicationId, date, timeSlot);
+
+    if (existingAdherenceDoc) {
+        const existingData = existingAdherenceDoc.data() || {};
+        const previousTaken = Boolean(existingData.taken);
+        const nextTaken = Boolean(taken);
+        const medicationRef = existingData.medication;
+
+        await db.runTransaction(async (transaction) => {
+            const medicationDoc = medicationRef ? await transaction.get(medicationRef) : null;
+
+            if (medicationDoc?.exists && medicationDoc.data()?.user?.id === uid && previousTaken !== nextTaken) {
+                transaction.update(medicationRef, {
+                    capsuleQuantity: getNextCapsuleQuantity(
+                        medicationDoc.data()?.capsuleQuantity,
+                        nextTaken ? -1 : 1
+                    ),
+                });
+            }
+
+            transaction.update(existingAdherenceDoc.ref, {
+                taken: nextTaken,
+                takenAt: nextTaken ? admin.firestore.Timestamp.now() : null,
+            });
+        });
+
+        return { success: true, adherenceId: existingAdherenceDoc.id };
+    }
+
+    const medicationDoc = await getMedicationDocForUser(uid, medicationId);
+    const medicationRef = medicationDoc.ref;
+    const adherenceRef = db.collection('AdherenceRecord').doc();
+    const nextTaken = Boolean(taken);
+
+    await db.runTransaction(async (transaction) => {
+        const latestMedicationDoc = await transaction.get(medicationRef);
+
+        if (!latestMedicationDoc.exists) {
+            throw new HttpsError('not-found', 'That medication could not be found.');
+        }
+
+        if (latestMedicationDoc.data()?.user?.id !== uid) {
+            throw new HttpsError('permission-denied', 'You can only log doses for your own medications.');
+        }
+
+        if (nextTaken) {
+            transaction.update(medicationRef, {
+                capsuleQuantity: getNextCapsuleQuantity(
+                    latestMedicationDoc.data()?.capsuleQuantity,
+                    -1
+                ),
+            });
+        }
+
+        transaction.set(adherenceRef, {
+            user: userRef(uid),
+            medication: medicationRef,
+            date: localDateToTimestamp(date),
+            timeSlot,
+            taken: nextTaken,
+            takenAt: nextTaken ? admin.firestore.Timestamp.now() : null,
+            createdAt: admin.firestore.Timestamp.now()
+        });
     });
 
-    return {success: true, adherenceId: docRef.id};
+    return {success: true, adherenceId: adherenceRef.id};
 });
 
 exports.getAdherenceByDateRange = onCall(callableOptions, async (request) => {
@@ -487,13 +685,44 @@ exports.getAdherenceByDateRange = onCall(callableOptions, async (request) => {
 });
 
 exports.updateAdherence = onCall(callableOptions, async (request) => {
-    await requireAuth(request);
+    const { uid } = await requireAuth(request);
 
     const { adherenceId, taken } = request.data;
 
-    await db.collection('AdherenceRecord').doc(adherenceId).update({
-        taken,
-        takenAt: taken ? admin.firestore.Timestamp.now() : null
+    const adherenceDoc = await getAdherenceDocForUser(uid, adherenceId);
+
+    await db.runTransaction(async (transaction) => {
+        const latestAdherenceDoc = await transaction.get(adherenceDoc.ref);
+
+        if (!latestAdherenceDoc.exists) {
+            throw new HttpsError('not-found', 'That dose record could not be found.');
+        }
+
+        if (latestAdherenceDoc.data()?.user?.id !== uid) {
+            throw new HttpsError('permission-denied', 'You can only update your own dose records.');
+        }
+
+        const previousTaken = Boolean(latestAdherenceDoc.data()?.taken);
+        const nextTaken = Boolean(taken);
+        const medicationRef = latestAdherenceDoc.data()?.medication;
+
+        if (medicationRef && previousTaken !== nextTaken) {
+            const medicationDoc = await transaction.get(medicationRef);
+
+            if (medicationDoc.exists && medicationDoc.data()?.user?.id === uid) {
+                transaction.update(medicationRef, {
+                    capsuleQuantity: getNextCapsuleQuantity(
+                        medicationDoc.data()?.capsuleQuantity,
+                        nextTaken ? -1 : 1
+                    ),
+                });
+            }
+        }
+
+        transaction.update(adherenceDoc.ref, {
+            taken: nextTaken,
+            takenAt: nextTaken ? admin.firestore.Timestamp.now() : null
+        });
     });
 
     return { success: true };
@@ -696,4 +925,36 @@ exports.sendFriendMessage = onCall(callableOptions, async (request) => {
 
     const savedDoc = await docRef.get();
     return serializeMessageSnapshot(savedDoc, userMap);
+});
+
+exports.sendFriendReminder = onCall(callableOptions, async (request) => {
+    const { uid } = await requireAuth(request);
+    const recipientId = request.data?.recipientId?.trim();
+
+    if (!recipientId) {
+        throw new HttpsError('invalid-argument', 'A friend is required.');
+    }
+
+    const hasAcceptedFriendship = await isAcceptedFriendshipBetweenUsers(uid, recipientId);
+    if (!hasAcceptedFriendship) {
+        throw new HttpsError('permission-denied', 'You can only remind accepted friends.');
+    }
+
+    const userMap = await getUserMapForIds([uid]);
+    const sender = userMap.get(uid);
+    const senderLabel =
+        sender?.displayName ||
+        sender?.email ||
+        'Your friend';
+
+    const pushResult = await sendFriendReminderPush(recipientId, uid, senderLabel);
+
+    if (!pushResult.delivered) {
+        throw new HttpsError('failed-precondition', 'We could not reach your friend right now.');
+    }
+
+    return {
+        success: true,
+        delivered: true,
+    };
 });

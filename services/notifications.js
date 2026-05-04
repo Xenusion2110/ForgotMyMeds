@@ -5,6 +5,7 @@ import { auth, callFunction } from "./firebaseConfig";
 
 const REMINDER_CHANNEL_ID = "dose-reminders";
 const MESSAGE_CHANNEL_ID = "friend-messages";
+const FRIEND_REMINDER_CHANNEL_ID = "friend-reminders";
 
 const SLOT_CONFIG = [
   {
@@ -26,6 +27,13 @@ const SLOT_CONFIG = [
     label: "Evening",
     medicationKey: "takesEvening",
     hour: 21,
+    minute: 0,
+  },
+  {
+    identifier: "dose-reminder-bedtime",
+    label: "Bedtime",
+    medicationKey: "takesBedtime",
+    hour: 23,
     minute: 0,
   },
 ];
@@ -55,10 +63,10 @@ const buildBodyForPendingSlot = (slotLabel, pendingCount) => {
   }
 
   if (pendingCount === 1) {
-    return `You still have a ${slotLabel.toLowerCase()} dose to log.`;
+    return `You still have a ${slotLabel.toLowerCase()} dose to take or check off.`;
   }
 
-  return `You still have ${pendingCount} ${slotLabel.toLowerCase()} doses to log.`;
+  return `You still have ${pendingCount} ${slotLabel.toLowerCase()} doses to take or check off.`;
 };
 
 const getTomorrowAt = (hour, minute) => {
@@ -137,6 +145,7 @@ export const ensureLocalNotificationPermissions = async () => {
   await Promise.all([
     ensureAndroidChannel(REMINDER_CHANNEL_ID, "Dose reminders"),
     ensureAndroidChannel(MESSAGE_CHANNEL_ID, "Friend messages"),
+    ensureAndroidChannel(FRIEND_REMINDER_CHANNEL_ID, "Friend reminders"),
   ]);
 
   const existingPermissions = await Notifications.getPermissionsAsync();
@@ -249,12 +258,17 @@ const showForegroundMessageNotification = async (remoteMessage) => {
     remoteMessage?.data?.title ||
     "New message";
   const body = remoteMessage?.notification?.body || remoteMessage?.data?.body || "";
+  const channelId =
+    remoteMessage?.data?.type === "friend-reminder"
+      ? FRIEND_REMINDER_CHANNEL_ID
+      : MESSAGE_CHANNEL_ID;
 
   await Notifications.scheduleNotificationAsync({
     content: {
       title,
       body,
       data: remoteMessage?.data || {},
+      ...(Platform.OS === "android" ? { channelId } : {}),
     },
     trigger: null,
   });

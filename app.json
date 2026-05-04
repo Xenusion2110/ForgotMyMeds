@@ -39,9 +39,7 @@
     },
     "plugins": [
       "expo-router",
-      //"@react-native-firebase/app",
-      "expo-notifications",
-      //"@react-native-firebase/messaging"
+      "expo-notifications"
     ]
   }
 }
